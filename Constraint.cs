@@ -17,10 +17,10 @@ using System;
 
 namespace ndvoronoisharp
 {
-
-
 	public class Constraint
 	{
+		public Region Positive;
+		public Region Negative;
 
 		public Constraint ()
 		{

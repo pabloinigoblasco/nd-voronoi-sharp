@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ndvoronoisharp
 {
@@ -22,7 +23,80 @@ namespace ndvoronoisharp
 
 	public class VoronoiDiagram
 	{
-		public List<Region> regions;
+		IEnumerable<Region> Regions{get{return regions;}}
+		List<Region> regions;
+		
+		public readonly double dimensions;
+		
+		public VoronoiDiagram(int dimensions)
+		{
+			this.dimensions=dimensions;
+			regions=new List<Region>();
+		}
+		
+		/// <summary>
+		/// Adds a new point to the diagram and returns the generated region.
+		/// </summary>
+		/// <param name="newPoint">
+		/// point coordinates. Dimensions must match.
+		/// A <see cref="System.Double[]"/>
+		/// </param>
+		/// <returns>
+		/// generated region that represent the set of pooints that has newPoint as the nearest neigbourgh.
+		/// A <see cref="Region"/>
+		/// </returns>
+		public Region AddNewPoint(double[] newPoint)
+		{
+			if(newPoint ==null || newPoint.Length!=dimensions)
+				throw new ArgumentException("point added null or has invalid dimensionality");
+			
+			
+			
+			
+		}
+		
+		/// <summary>
+		/// Look up the region that match point
+		/// </summary>
+		/// <param name="point">
+		/// point that will be checked
+		/// A <see cref="System.Double[]"/>
+		/// </param>
+		/// <returns>
+		/// Region that contains point.
+		/// A <see cref="Region"/>
+		/// </returns>
+		public Region GetMatchingRegion(double[] point)
+		{
+			if(newPoint ==null || newPoint.Length!=dimensions)
+				throw new ArgumentException("point added null or has invalid dimensionality");
+			
+			
+			/*This will be a first approach as a not very efficent algorithm*/
+			
+			//candidate region
+			Region r=regions.FirstOrDefault();
+			
+			if(r==null)
+			{
+				bool matchAllConstraints=false;
+				
+				while(!matchAllConstraints)
+				{
+					
+				}
+			}
+			
+			/*no region exist. Regions is empty.*/
+			else
+			{
+				Region newRegion=new Region(point);
+				this.regions.Add(newRegion);
+				
+				return newRegion;
+			}
+			
+		}
 		
 		
 	}

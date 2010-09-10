@@ -1,5 +1,6 @@
 using System;
 using System.Windows.Forms;
+using ndvoronoisharp;
 
 namespace Voronoi2DTestingWindow
 {
@@ -14,6 +15,9 @@ namespace Voronoi2DTestingWindow
 		public MainClass()
 		{
 			this.WindowState=System.Windows.Forms.FormWindowState.Maximized;
+			
+			VoronoiDiagram voronoi=new VoronoiDiagram(2);
+			voronoi.
 		}
 	}
 }
