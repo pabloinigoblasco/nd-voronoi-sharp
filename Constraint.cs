@@ -34,7 +34,7 @@ namespace ndvoronoisharp
 	/// This class represent a hyperplane that subdivides the ndimensional space in two subspaces. 
 	/// It is used to define bounds between voronoi regions.
 	/// </summary>
-	internal class DefaultConstraint
+	internal class DefaultConstraint:Constraint
 	{
 		/// <summary>
 		/// Example in the plane Ax+By+Cz<D, coefficents would be [A,B,C,D]

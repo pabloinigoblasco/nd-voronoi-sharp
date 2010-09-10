@@ -19,15 +19,35 @@ using System.Linq;
 
 namespace ndvoronoisharp
 {
+	/// <summary>
+	/// This class represent a n-dimensional voronoi region
+	/// </summary>
 	public class Region
 	{
 		public double[] Center{get; private set;}
 		internal Dictionary<Constraint,Region> constraints;
-		public IEnumerable<Constraint> Constraints{get{return constraints.Keys;}}
+		internal Dictionary<BoundingVertex,IEnumerable<Region>> vertexes;
+		public IEnumerable<BoundingVertex> Vertexes{get{return vertexes.Keys;}}
 		
+		public IEnumerable<Constraint> Constraints{get{return constraints.Keys;}}
+		public IEnumerable<Region> NeighbourgRegions{get{return constraints.Values;}}
+		
+		
+		
+		/// <summary>
+		/// constructor visibility is restricted to assert dimensionality coherence 
+		/// </summary>
 		internal Region (double[] center)
 		{
 			this.Center=center;
+		}
+		
+		public void CalculateVertexes()
+		{
+			
+			
+			
+			
 		}
 	}
 }

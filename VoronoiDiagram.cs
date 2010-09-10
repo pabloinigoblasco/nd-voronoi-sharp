@@ -52,21 +52,40 @@ namespace ndvoronoisharp
 			
 			Region matchingRegion = this.GetMatchingRegion (newPoint);
 			
-			if (matchingRegion == null) {
-				/*no region exist. Regions is empty.*/				
-				
-				Region newRegion = new Region (newPoint);
-				this.regions.Add (newRegion);
-				
-				return newRegion;
-				
-			} 
-			else 
-			{
+			Region newRegion = new Region (newPoint);
+			this.regions.Add (newRegion);
 			
+			if (matchingRegion != null) {
+				//build the new bound between the matching region centre and the new point
+				DefaultConstraint newBoundConstraint = new DefaultConstraint (newRegion.Center, matchingRegion.Center);
+				newRegion.constraints.Add (newBoundConstraint, matchingRegion);
 				
+				//adding the inverse constraint to the maching region.
+				matchingRegion.CalculateVertexes (new InverseConstraintDecorator(newBoundConstraint),newRegion);
+				
+				//getting affected regions and their affected vertexes.
+				var affectedRegions=matchingRegion.NeighbourgRegions
+												  .Select(nr=> new{region=nr,
+															   affectedVertexes=nr.Vertexes.Where(v=>newBoundConstraint.Verifies(v.point))})
+																.Where(tuple=>tuple.affectedVertexes.Any());
+				
+				foreach(var affectedRegionInfo in affectedRegions)
+				{
+					Region affectedRegion=affectedRegionInfo.region;
+					DefaultConstraint colateralBound=new DefaultConstraint(newRegion.Center,affectedRegion.Center);
+					newRegion.constraints.Add(colateralBound,affectedRegion);
+					
+					affectedRegion.constraints.Add(new InverseConstraintDecorator(colateralBound),affectedRegion);
+					foreach(var removingVertex in affectedRegionInfo.affectedVertexes)
+						affectedRegion.vertexes.Remove(removingVertex);
+					
+					affectedRegion.CalculateVertexes();
+				}
+				
+				newRegion.CalculateVertexes();                                                   
 			}
 			
+			return newRegion;
 		}
 
 		/// <summary>
@@ -89,28 +108,33 @@ namespace ndvoronoisharp
 						/*This will be a very first approach as a not very efficent algorithm */
 
 
-if (regions.Count () == 0)
-				return regions.Single ();
-			else
-				return null;
-			
-						/*candidate region */
-Region r = regions.First ();
-			
-			bool matchAllConstraints = false;
-			while (!matchAllConstraints) {
-				matchAllConstraints = false;
-				foreach (var constraintInfo in r.constraints) {
-					var constraint = constraintInfo.Key;
-					var foreingRegion = constraintInfo.Value;
-					
-					if (!constraint.Verifies (point))
-						r = foreingRegion;
-				}
-				matchAllConstraints = true;
+			if (!regions.Any ())
+			{
+				return null; 
 			}
-			
-			return r;
+			else if (regions.Count () == 1)
+			{
+				return regions.Single ();
+			}
+			else {
+				/*candidate region */				
+				Region r = regions.First ();
+				
+				bool matchAllConstraints = false;
+				while (!matchAllConstraints) {
+					matchAllConstraints = false;
+					foreach (var constraintInfo in r.constraints) {
+						var constraint = constraintInfo.Key;
+						var foreingRegion = constraintInfo.Value;
+						
+						if (!constraint.Verifies (point))
+							r = foreingRegion;
+					}
+					matchAllConstraints = true;
+				}
+				
+				return r;
+			}
 		}
 	}
 }

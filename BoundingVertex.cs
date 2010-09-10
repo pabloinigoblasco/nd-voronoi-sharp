@@ -19,9 +19,10 @@ namespace ndvoronoisharp
 {
 	public class BoundingVertex
 	{
-
-		public BoundingVertex ()
+		public readonly double[] point;
+		public BoundingVertex (double[] point)
 		{
+			this.point=point;
 		}
 	}
 }
