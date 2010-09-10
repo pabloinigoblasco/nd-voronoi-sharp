@@ -23,17 +23,19 @@ namespace ndvoronoisharp
 
 	public class VoronoiDiagram
 	{
-		IEnumerable<Region> Regions{get{return regions;}}
-		List<Region> regions;
-		
-		public readonly double dimensions;
-		
-		public VoronoiDiagram(int dimensions)
-		{
-			this.dimensions=dimensions;
-			regions=new List<Region>();
+		IEnumerable<Region> Regions {
+			get { return regions; }
 		}
-		
+		List<Region> regions;
+
+		public readonly double dimensions;
+
+		public VoronoiDiagram (int dimensions)
+		{
+			this.dimensions = dimensions;
+			regions = new List<Region> ();
+		}
+
 		/// <summary>
 		/// Adds a new point to the diagram and returns the generated region.
 		/// </summary>
@@ -45,16 +47,16 @@ namespace ndvoronoisharp
 		/// generated region that represent the set of pooints that has newPoint as the nearest neigbourgh.
 		/// A <see cref="Region"/>
 		/// </returns>
-		public Region AddNewPoint(double[] newPoint)
+		public Region AddNewPoint (double[] newPoint)
 		{
-			if(newPoint ==null || newPoint.Length!=dimensions)
-				throw new ArgumentException("point added null or has invalid dimensionality");
+			if (newPoint == null || newPoint.Length != dimensions)
+				throw new ArgumentException ("point added null or has invalid dimensionality");
 			
 			
 			
-			
+			throw new NotImplementedException ();
 		}
-		
+
 		/// <summary>
 		/// Look up the region that match point
 		/// </summary>
@@ -66,38 +68,42 @@ namespace ndvoronoisharp
 		/// Region that contains point.
 		/// A <see cref="Region"/>
 		/// </returns>
-		public Region GetMatchingRegion(double[] point)
+		public Region GetMatchingRegion (double[] point)
 		{
-			if(newPoint ==null || newPoint.Length!=dimensions)
-				throw new ArgumentException("point added null or has invalid dimensionality");
-			
-			
-			/*This will be a first approach as a not very efficent algorithm*/
-			
-			//candidate region
-			Region r=regions.FirstOrDefault();
-			
-			if(r==null)
-			{
-				bool matchAllConstraints=false;
-				
-				while(!matchAllConstraints)
-				{
-					
-				}
+			if (newPoint == null || point.Length != dimensions) {
+				throw new ArgumentException ("point added null or has invalid dimensionality");
 			}
 			
-			/*no region exist. Regions is empty.*/
-			else
-			{
-				Region newRegion=new Region(point);
-				this.regions.Add(newRegion);
+						/*This will be a first approach as a not very efficent algorithm */
+
+			/*candidate region */
+			Region r = regions.FirstOrDefault ();
+			
+			if (r == null) {
+				bool matchAllConstraints = false;
+				while (!matchAllConstraints) {
+					matchAllConstraints = false;
+					foreach (var constraintInfo in r.constraints) {
+						var constraint = constraintInfo.Key;
+						var foreingRegion = constraintInfo.Value;
+						
+						if (!constraint.Verifies (point))
+							r = foreingRegion;
+					}
+					matchAllConstraints = true;
+				}
+				
+				return r;
+				
+			} else {
+				/*no region exist. Regions is empty.*/				
+				
+				Region newRegion = new Region (point);
+				this.regions.Add (newRegion);
 				
 				return newRegion;
 			}
 			
 		}
-		
-		
 	}
 }

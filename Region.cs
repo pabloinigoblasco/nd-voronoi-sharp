@@ -15,17 +15,19 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ndvoronoisharp
 {
 	public class Region
 	{
-		double[] center;
-		List<Constraint> constrainsts;
+		public double[] Center{get; private set;}
+		internal Dictionary<Constraint,Region> constraints;
+		public IEnumerable<Constraint> Constraints{get{return constraints.Keys;}}
 		
 		internal Region (double[] center)
 		{
-			center=new double[dimensions];
+			this.Center=center;
 		}
 	}
 }
