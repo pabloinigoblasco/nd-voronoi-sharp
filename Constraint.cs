@@ -17,7 +17,24 @@ using System;
 using System.Linq;
 namespace ndvoronoisharp
 {
-	public class Constraint
+	
+	/// <summary>
+	/// This interface represent a hyperplane that subdivides the ndimensional space in two subspaces. 
+	/// It is used to define bounds between voronoi regions.
+	/// </summary>
+	public interface Constraint
+	{	
+		/// <summary>
+		/// Checks if the point belong to the owner hyperplane
+		/// </summary>
+		bool Verifies (double[] point);
+	}
+		
+	/// <summary>
+	/// This class represent a hyperplane that subdivides the ndimensional space in two subspaces. 
+	/// It is used to define bounds between voronoi regions.
+	/// </summary>
+	internal class DefaultConstraint
 	{
 		/// <summary>
 		/// Example in the plane Ax+By+Cz<D, coefficents would be [A,B,C,D]
@@ -29,7 +46,7 @@ namespace ndvoronoisharp
 		/// It represents a single inequality that checks if a sample point belong to the positive or negative subspaces.
 		/// </summary>
 		/// </param>
-		public Constraint (double[] ownerPoint, double[] foreignPoint)
+		public DefaultConstraint (double[] ownerPoint, double[] foreignPoint)
 		{
 			double[] middlePoint = new double[ownerPoint.Length];
 			coefficents = new double[ownerPoint.Length + 1];
@@ -51,9 +68,29 @@ namespace ndvoronoisharp
 		public bool Verifies (double[] point)
 		{
 			//here should be a verification for the dimensionality. But we're simplifying and looking for efficency.
-			double res = Enumerable.Range (0, point.Length).Sum (i=> point[i] * coefficents[i]);
+			double res = Enumerable.Range (0, point.Length).Sum (i => point[i] * coefficents[i]);
 			
 			return res > coefficents[coefficents.Length - 1];
+		}
+	}
+
+	/// <summary>
+	/// This decorator is useful to view a constraint from the inverse point of view in terms of regions.
+	/// It is not nice waste memmory in n-dimensional spaces.
+	/// </summary>
+	internal class InverseConstraintDecorator : Constraint
+	{
+		readonly DefaultConstraint decorated;
+		public InverseConstraintDecorator (DefaultConstraint constraint)
+		{
+			if(decorated==null)
+				throw new ArgumentException("invalid constraint.");
+			
+			decorated = constraint;
+		}
+		public bool Verifies (double[] point)
+		{
+			return !decorated.Verifies (point);
 		}
 	}
 }

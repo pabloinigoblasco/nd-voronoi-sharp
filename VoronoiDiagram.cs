@@ -19,8 +19,6 @@ using System.Linq;
 
 namespace ndvoronoisharp
 {
-
-
 	public class VoronoiDiagram
 	{
 		IEnumerable<Region> Regions {
@@ -52,9 +50,23 @@ namespace ndvoronoisharp
 			if (newPoint == null || newPoint.Length != dimensions)
 				throw new ArgumentException ("point added null or has invalid dimensionality");
 			
+			Region matchingRegion = this.GetMatchingRegion (newPoint);
 			
+			if (matchingRegion == null) {
+				/*no region exist. Regions is empty.*/				
+				
+				Region newRegion = new Region (newPoint);
+				this.regions.Add (newRegion);
+				
+				return newRegion;
+				
+			} 
+			else 
+			{
 			
-			throw new NotImplementedException ();
+				
+			}
+			
 		}
 
 		/// <summary>
@@ -70,40 +82,35 @@ namespace ndvoronoisharp
 		/// </returns>
 		public Region GetMatchingRegion (double[] point)
 		{
-			if (newPoint == null || point.Length != dimensions) {
+			if (point == null || point.Length != dimensions) {
 				throw new ArgumentException ("point added null or has invalid dimensionality");
 			}
 			
-						/*This will be a first approach as a not very efficent algorithm */
+						/*This will be a very first approach as a not very efficent algorithm */
 
-			/*candidate region */
-			Region r = regions.FirstOrDefault ();
+
+if (regions.Count () == 0)
+				return regions.Single ();
+			else
+				return null;
 			
-			if (r == null) {
-				bool matchAllConstraints = false;
-				while (!matchAllConstraints) {
-					matchAllConstraints = false;
-					foreach (var constraintInfo in r.constraints) {
-						var constraint = constraintInfo.Key;
-						var foreingRegion = constraintInfo.Value;
-						
-						if (!constraint.Verifies (point))
-							r = foreingRegion;
-					}
-					matchAllConstraints = true;
+						/*candidate region */
+Region r = regions.First ();
+			
+			bool matchAllConstraints = false;
+			while (!matchAllConstraints) {
+				matchAllConstraints = false;
+				foreach (var constraintInfo in r.constraints) {
+					var constraint = constraintInfo.Key;
+					var foreingRegion = constraintInfo.Value;
+					
+					if (!constraint.Verifies (point))
+						r = foreingRegion;
 				}
-				
-				return r;
-				
-			} else {
-				/*no region exist. Regions is empty.*/				
-				
-				Region newRegion = new Region (point);
-				this.regions.Add (newRegion);
-				
-				return newRegion;
+				matchAllConstraints = true;
 			}
 			
+			return r;
 		}
 	}
 }

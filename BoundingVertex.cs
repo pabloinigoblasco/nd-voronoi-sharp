@@ -17,8 +17,6 @@ using System;
 
 namespace ndvoronoisharp
 {
-
-
 	public class BoundingVertex
 	{
 
