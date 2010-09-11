@@ -5,29 +5,34 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nd-voronoi-sharp", "nd-voro
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Voronoi2DTestingWindow", "Voronoi2DTestingWindow\Voronoi2DTestingWindow.csproj", "{C4146E29-B826-4EA4-9592-BB862726AC7F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{69BC9C2F-AE3F-4EE1-8111-8AACE4A458D1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestsLauncher", "TestsLauncher\TestsLauncher.csproj", "{932BCDE1-940A-4F67-8389-43A1D5AFA3D4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
-		Release|Any CPU = Release|Any CPU
 		Default|Any CPU = Default|Any CPU
+		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{69BC9C2F-AE3F-4EE1-8111-8AACE4A458D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{69BC9C2F-AE3F-4EE1-8111-8AACE4A458D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{69BC9C2F-AE3F-4EE1-8111-8AACE4A458D1}.Default|Any CPU.ActiveCfg = Debug|Any CPU
-		{69BC9C2F-AE3F-4EE1-8111-8AACE4A458D1}.Default|Any CPU.Build.0 = Debug|Any CPU
-		{69BC9C2F-AE3F-4EE1-8111-8AACE4A458D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{69BC9C2F-AE3F-4EE1-8111-8AACE4A458D1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C4146E29-B826-4EA4-9592-BB862726AC7F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C4146E29-B826-4EA4-9592-BB862726AC7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C4146E29-B826-4EA4-9592-BB862726AC7F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C4146E29-B826-4EA4-9592-BB862726AC7F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F5F5CBE9-3406-4FF1-AFA7-A108BD71997D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F5F5CBE9-3406-4FF1-AFA7-A108BD71997D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5F5CBE9-3406-4FF1-AFA7-A108BD71997D}.Default|Any CPU.ActiveCfg = Debug|Any CPU
 		{F5F5CBE9-3406-4FF1-AFA7-A108BD71997D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F5F5CBE9-3406-4FF1-AFA7-A108BD71997D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C4146E29-B826-4EA4-9592-BB862726AC7F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C4146E29-B826-4EA4-9592-BB862726AC7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C4146E29-B826-4EA4-9592-BB862726AC7F}.Default|Any CPU.ActiveCfg = Debug|Any CPU
+		{C4146E29-B826-4EA4-9592-BB862726AC7F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C4146E29-B826-4EA4-9592-BB862726AC7F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{932BCDE1-940A-4F67-8389-43A1D5AFA3D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{932BCDE1-940A-4F67-8389-43A1D5AFA3D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{932BCDE1-940A-4F67-8389-43A1D5AFA3D4}.Default|Any CPU.ActiveCfg = Debug|Any CPU
+		{932BCDE1-940A-4F67-8389-43A1D5AFA3D4}.Default|Any CPU.Build.0 = Debug|Any CPU
+		{932BCDE1-940A-4F67-8389-43A1D5AFA3D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{932BCDE1-940A-4F67-8389-43A1D5AFA3D4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItem = Tests\Tests.csproj

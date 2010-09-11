@@ -1,4 +1,6 @@
-/*Copyright (C) 2010  Pablo Iñigo Blasco
+/*  Copyright (C) 2010  Pablo Iñigo Blasco. 
+    Computer Architecture and Technology Department.
+    Universidad de Sevilla. 
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,14 +17,29 @@
 
 using System;
 using System.Collections.Generic;
+using ndvoronoisharp.implementations;
 
 namespace ndvoronoisharp
 {
 	public class SubSpace
 	{
-		public readonly List<Constraint> constraints;
+        public static SubSpace FromPoint(params double[] coordinates)
+        {
+            //foreach coordinate, one constraint x[i]=coordinate[y], and the term??
+            Constraint[] constraints=new Constraint[coordinates.Length];
+            for (int i = 0; i < coordinates.Length; i++)
+            {
+                double[] constraintCoeffs=new double[coordinates.Length];
+                constraintCoeffs[i] = coordinates[i];
+                constraints[i] = new DefaultConstraint(constraintCoeffs);
+            }
+            return new SubSpace(constraints);
+        }
+
+        public readonly List<Constraint> constraints;
 		
-		public SubSpace (IEnumerable<Constraint> constraints)
+
+		private SubSpace (IEnumerable<Constraint> constraints)
 		{
 			this.constraints=new List<Constraint>(constraints);
 
@@ -40,11 +57,12 @@ namespace ndvoronoisharp
 		/// <returns>
 		/// The intersection Subspace 
 		///</returns>	
-		public SubSpace Verifies(SubSpace subspace)
+		public SubSpace Intersects(SubSpace subspace)
 		{
 			//TODO:firstly find if it represent a inconsistent problem
 			bool inconsistentSystem=false;
-			
+			DotNumerics.LinearAlgebra.CSLapack.l
+
 			if(inconsistentSystem)
 			{
 				//If so, both subspaces (the hyperplane Constraint and this subspace) are pararell, and that means that it can verifies the constraint or not
@@ -74,5 +92,11 @@ namespace ndvoronoisharp
 				return constraints[0].EuclideanSpaceDimensionality -constraints.Count;
 			}
 		}
-	}
+
+        public static SubSpace FromConstraints(params Constraint[] constraints)
+        {
+            return new SubSpace(constraints);
+        }
+    }
 }
+
