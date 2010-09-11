@@ -19,42 +19,43 @@ using DotNumerics.LinearAlgebra.CSLapack;
 
 namespace ndvoronoisharp
 {
-	
+
 	/// <summary>
 	/// This interface represent a semi-hyperSpace whose bounds are defined by a hyperplane. The normal
 	/// vector of the hyperplane defines the owned semi-hyperSpace. 
 	/// It is used to define bounds between voronoi regions.
 	/// </summary>
 	public interface Constraint
-	{	
+	{
 		/// <summary>
 		/// Checks if the point belong to the owner hyperplane
 		/// </summary>
 		bool ContainsSubspace (double[] point);
-		
-		double this[int coordinate]{get;}
-		
-		int EuclideanSpaceDimensionality{get;}
+
+		double this[int coordinate] {
+			get;
+		}
+
+		int EuclideanSpaceDimensionality { get; }
 	}
+
+	namespace implementations
+	{
 		
 	/// <summary>
 	/// This class represent a hyperplane that subdivides the ndimensional space in two subspaces. 
 	/// It is used to define bounds between voronoi regions.
 	/// </summary>
-	internal class DefaultConstraint:Constraint
+	public class DefaultConstraint : Constraint
 	{
 		/// <summary>
 		/// Example in the plane Ax+By+Cz<D in R3, coefficents would be [A,B,C,D]
 		/// </summary>
 		private readonly double[] coefficents;
-	
-		
-		public double this[int coordinate]
-		{
-			get
-			{
-				return coefficents[coordinate];
-			}	
+
+
+		public double this[int coordinate] {
+			get { return coefficents[coordinate]; }
 		}
 
 		/// <summary>
@@ -74,8 +75,7 @@ namespace ndvoronoisharp
 			}
 			
 			//calculating the independent coefficent
-			coefficents[EuclideanSpaceDimensionality - 1] = Enumerable.Range (0, EuclideanSpaceDimensionality - 1)
-															   .Sum (i => middlePoint[i] * coefficents[i]);
+			coefficents[EuclideanSpaceDimensionality - 1] = Enumerable.Range (0, EuclideanSpaceDimensionality - 1).Sum (i => middlePoint[i] * coefficents[i]);
 			
 		}
 
@@ -89,44 +89,46 @@ namespace ndvoronoisharp
 			
 			return res > coefficents[coefficents.Length - 1];
 		}
-		
+
 		public bool ContainsSubspace (SubSpace subspace)
 		{
-			throw new NotImplementedException();
+			throw new NotImplementedException ();
 		}
-		
-	
-		public int EuclideanSpaceDimensionality{get{return coefficents.Length-1;}}
+
+
+		public int EuclideanSpaceDimensionality {
+			get { return coefficents.Length - 1; }
+		}
 	}
 
-	/// <summary>
-	/// This decorator is useful to view a constraint from the inverse point of view in terms of regions.
-	/// It is not nice waste memmory in n-dimensional spaces.
-	/// </summary>
-	internal class InverseConstraintDecorator : Constraint
-	{
-		readonly DefaultConstraint decorated;
-		public InverseConstraintDecorator (DefaultConstraint constraint)
+	
+		/// <summary>
+		/// This decorator is useful to view a constraint from the inverse point of view in terms of regions.
+		/// It is not nice waste memmory in n-dimensional spaces.
+		/// </summary>
+		public class InverseConstraintDecorator : Constraint
 		{
-			if(decorated==null)
-				throw new ArgumentException("invalid constraint.");
-			
-			decorated = constraint;
-		}
-		
-		public bool ContainsSubspace (double[] point)
-		{
-			return !decorated.ContainsSubspace (point);
-		}
-		
-		public double this[int coordinate]
-		{
-			get
+			readonly DefaultConstraint decorated;
+			public InverseConstraintDecorator (DefaultConstraint constraint)
 			{
-				return -decorated[coordinate];
+				if (decorated == null)
+					throw new ArgumentException ("invalid constraint.");
+				
+				decorated = constraint;
 			}
+
+			public bool ContainsSubspace (double[] point)
+			{
+				return !decorated.ContainsSubspace (point);
+			}
+
+			public double this[int coordinate] {
+				get { return -decorated[coordinate]; }
+			}
+			public int EuclideanSpaceDimensionality {
+				get { return decorated.EuclideanSpaceDimensionality; }
+			}
+			
 		}
-		public int EuclideanSpaceDimensionality{get{return decorated.EuclideanSpaceDimensionality;}}
-		
 	}
 }

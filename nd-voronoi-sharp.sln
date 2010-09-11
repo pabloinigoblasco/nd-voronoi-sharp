@@ -5,12 +5,21 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nd-voronoi-sharp", "nd-voro
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Voronoi2DTestingWindow", "Voronoi2DTestingWindow\Voronoi2DTestingWindow.csproj", "{C4146E29-B826-4EA4-9592-BB862726AC7F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{69BC9C2F-AE3F-4EE1-8111-8AACE4A458D1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
+		Default|Any CPU = Default|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{69BC9C2F-AE3F-4EE1-8111-8AACE4A458D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{69BC9C2F-AE3F-4EE1-8111-8AACE4A458D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{69BC9C2F-AE3F-4EE1-8111-8AACE4A458D1}.Default|Any CPU.ActiveCfg = Debug|Any CPU
+		{69BC9C2F-AE3F-4EE1-8111-8AACE4A458D1}.Default|Any CPU.Build.0 = Debug|Any CPU
+		{69BC9C2F-AE3F-4EE1-8111-8AACE4A458D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{69BC9C2F-AE3F-4EE1-8111-8AACE4A458D1}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C4146E29-B826-4EA4-9592-BB862726AC7F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C4146E29-B826-4EA4-9592-BB862726AC7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C4146E29-B826-4EA4-9592-BB862726AC7F}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -21,6 +30,33 @@ Global
 		{F5F5CBE9-3406-4FF1-AFA7-A108BD71997D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
-		StartupItem = Voronoi2DTestingWindow\Voronoi2DTestingWindow.csproj
+		StartupItem = Tests\Tests.csproj
+		Policies = $0
+		$0.DotNetNamingPolicy = $1
+		$1.DirectoryNamespaceAssociation = None
+		$1.ResourceNamePolicy = FileFormatDefault
+		$0.TextStylePolicy = $2
+		$2.FileWidth = 120
+		$2.TabWidth = 4
+		$2.inheritsSet = Mono
+		$2.inheritsScope = text/plain
+		$2.scope = text/plain
+		$0.TextStylePolicy = $3
+		$3.inheritsSet = null
+		$3.scope = text/x-csharp
+		$0.CSharpFormattingPolicy = $4
+		$4.inheritsSet = Mono
+		$4.inheritsScope = text/x-csharp
+		$4.scope = text/x-csharp
+		$0.StandardHeader = $5
+		$5.Text = 
+		$5.inheritsSet = MITX11License
+		$0.VersionControlPolicy = $6
+		$6.inheritsSet = Mono
+		$0.ChangeLogPolicy = $7
+		$7.UpdateMode = None
+		$7.MessageStyle = $8
+		$8.LineAlign = 0
+		$7.inheritsSet = Mono
 	EndGlobalSection
 EndGlobal
