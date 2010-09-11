@@ -32,13 +32,21 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="DotNumerics, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>dependencies\DotNumerics.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
-    <Compile Include="Region.cs" />
     <Compile Include="Constraint.cs" />
-    <Compile Include="BoundingVertex.cs" />
     <Compile Include="VoronoiDiagram.cs" />
+    <Compile Include="SubSpace.cs" />
+    <Compile Include="HyperRegion.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Folder Include="Plane\" />
+    <Folder Include="Space\" />
+  </ItemGroup>
 </Project>

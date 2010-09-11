@@ -15,11 +15,14 @@
 
 using System;
 using System.Linq;
+using DotNumerics.LinearAlgebra.CSLapack;
+
 namespace ndvoronoisharp
 {
 	
 	/// <summary>
-	/// This interface represent a hyperplane that subdivides the ndimensional space in two subspaces. 
+	/// This interface represent a semi-hyperSpace whose bounds are defined by a hyperplane. The normal
+	/// vector of the hyperplane defines the owned semi-hyperSpace. 
 	/// It is used to define bounds between voronoi regions.
 	/// </summary>
 	public interface Constraint
@@ -27,7 +30,11 @@ namespace ndvoronoisharp
 		/// <summary>
 		/// Checks if the point belong to the owner hyperplane
 		/// </summary>
-		bool Verifies (double[] point);
+		bool ContainsSubspace (double[] point);
+		
+		double this[int coordinate]{get;}
+		
+		int EuclideanSpaceDimensionality{get;}
 	}
 		
 	/// <summary>
@@ -37,9 +44,18 @@ namespace ndvoronoisharp
 	internal class DefaultConstraint:Constraint
 	{
 		/// <summary>
-		/// Example in the plane Ax+By+Cz<D, coefficents would be [A,B,C,D]
+		/// Example in the plane Ax+By+Cz<D in R3, coefficents would be [A,B,C,D]
 		/// </summary>
-		public readonly double[] coefficents;
+		private readonly double[] coefficents;
+	
+		
+		public double this[int coordinate]
+		{
+			get
+			{
+				return coefficents[coordinate];
+			}	
+		}
 
 		/// <summary>
 		/// Constraint is created as a bound between these two points. A line-bound in 2D case, a Plane in the 3D case and a hyperplane in ND case.
@@ -58,20 +74,29 @@ namespace ndvoronoisharp
 			}
 			
 			//calculating the independent coefficent
-			coefficents[coefficents.Length - 1] = Enumerable.Range (0, coefficents.Length - 1).Sum (i => middlePoint[i] * coefficents[i]);
+			coefficents[EuclideanSpaceDimensionality - 1] = Enumerable.Range (0, EuclideanSpaceDimensionality - 1)
+															   .Sum (i => middlePoint[i] * coefficents[i]);
 			
 		}
 
 		/// <summary>
 		/// Checks if the point belong to the owner hyperplane
 		/// </summary>
-		public bool Verifies (double[] point)
+		public bool ContainsSubspace (double[] point)
 		{
 			//here should be a verification for the dimensionality. But we're simplifying and looking for efficency.
 			double res = Enumerable.Range (0, point.Length).Sum (i => point[i] * coefficents[i]);
 			
 			return res > coefficents[coefficents.Length - 1];
 		}
+		
+		public bool ContainsSubspace (SubSpace subspace)
+		{
+			throw new NotImplementedException();
+		}
+		
+	
+		public int EuclideanSpaceDimensionality{get{return coefficents.Length-1;}}
 	}
 
 	/// <summary>
@@ -88,9 +113,20 @@ namespace ndvoronoisharp
 			
 			decorated = constraint;
 		}
-		public bool Verifies (double[] point)
+		
+		public bool ContainsSubspace (double[] point)
 		{
-			return !decorated.Verifies (point);
+			return !decorated.ContainsSubspace (point);
 		}
+		
+		public double this[int coordinate]
+		{
+			get
+			{
+				return -decorated[coordinate];
+			}
+		}
+		public int EuclideanSpaceDimensionality{get{return decorated.EuclideanSpaceDimensionality;}}
+		
 	}
 }

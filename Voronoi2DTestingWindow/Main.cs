@@ -1,5 +1,7 @@
 using System;
 using System.Windows.Forms;
+using System.Drawing;
+
 using ndvoronoisharp;
 
 namespace Voronoi2DTestingWindow
@@ -15,9 +17,15 @@ namespace Voronoi2DTestingWindow
 		public MainClass()
 		{
 			this.WindowState=System.Windows.Forms.FormWindowState.Maximized;
+			VoronoiDiagram voronoi=new VoronoiDiagram(3);
+			this.Paint+=paint_event;
 			
-			VoronoiDiagram voronoi=new VoronoiDiagram(2);
-			voronoi.
+		}
+		System.Drawing.Font f=new System.Drawing.Font("arial",8);
+		void paint_event(object sender, PaintEventArgs e)
+		{
+			e.Graphics.DrawString("Hello",f,Brushes.Red,new Point(0,0));
+			
 		}
 	}
 }

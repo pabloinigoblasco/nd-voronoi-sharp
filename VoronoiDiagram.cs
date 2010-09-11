@@ -21,17 +21,17 @@ namespace ndvoronoisharp
 {
 	public class VoronoiDiagram
 	{
-		IEnumerable<Region> Regions {
+		IEnumerable<HyperRegion> Regions {
 			get { return regions; }
 		}
-		List<Region> regions;
+		List<HyperRegion> regions;
 
 		public readonly double dimensions;
 
 		public VoronoiDiagram (int dimensions)
 		{
 			this.dimensions = dimensions;
-			regions = new List<Region> ();
+			regions = new List<HyperRegion> ();
 		}
 
 		/// <summary>
@@ -45,14 +45,14 @@ namespace ndvoronoisharp
 		/// generated region that represent the set of pooints that has newPoint as the nearest neigbourgh.
 		/// A <see cref="Region"/>
 		/// </returns>
-		public Region AddNewPoint (double[] newPoint)
+		public HyperRegion AddNewPoint (double[] newPoint)
 		{
 			if (newPoint == null || newPoint.Length != dimensions)
 				throw new ArgumentException ("point added null or has invalid dimensionality");
 			
-			Region matchingRegion = this.GetMatchingRegion (newPoint);
+			HyperRegion matchingRegion = this.GetMatchingRegion (newPoint);
 			
-			Region newRegion = new Region (newPoint);
+			HyperRegion newRegion = new HyperRegion (newPoint);
 			this.regions.Add (newRegion);
 			
 			if (matchingRegion != null) {
@@ -61,28 +61,29 @@ namespace ndvoronoisharp
 				newRegion.constraints.Add (newBoundConstraint, matchingRegion);
 				
 				//adding the inverse constraint to the maching region.
-				matchingRegion.CalculateVertexes (new InverseConstraintDecorator(newBoundConstraint),newRegion);
+				matchingRegion.constraints.Add(new InverseConstraintDecorator(newBoundConstraint),newRegion);
+				matchingRegion.CalculateSubspaces ();
 				
 				//getting affected regions and their affected vertexes.
 				var affectedRegions=matchingRegion.NeighbourgRegions
 												  .Select(nr=> new{region=nr,
-															   affectedVertexes=nr.Vertexes.Where(v=>newBoundConstraint.Verifies(v.point))})
+															   affectedVertexes=nr.Subspaces.Where(v=>newBoundConstraint.ContainsSubspace(v))})
 																.Where(tuple=>tuple.affectedVertexes.Any());
 				
 				foreach(var affectedRegionInfo in affectedRegions)
 				{
-					Region affectedRegion=affectedRegionInfo.region;
+					HyperRegion affectedRegion=affectedRegionInfo.region;
 					DefaultConstraint colateralBound=new DefaultConstraint(newRegion.Center,affectedRegion.Center);
 					newRegion.constraints.Add(colateralBound,affectedRegion);
 					
 					affectedRegion.constraints.Add(new InverseConstraintDecorator(colateralBound),affectedRegion);
 					foreach(var removingVertex in affectedRegionInfo.affectedVertexes)
-						affectedRegion.vertexes.Remove(removingVertex);
+						affectedRegion.subspaces.Remove(removingVertex);
 					
-					affectedRegion.CalculateVertexes();
+					affectedRegion.CalculateSubspaces();
 				}
 				
-				newRegion.CalculateVertexes();                                                   
+				newRegion.CalculateSubspaces();                                                   
 			}
 			
 			return newRegion;
@@ -99,7 +100,7 @@ namespace ndvoronoisharp
 		/// Region that contains point.
 		/// A <see cref="Region"/>
 		/// </returns>
-		public Region GetMatchingRegion (double[] point)
+		public HyperRegion GetMatchingRegion (double[] point)
 		{
 			if (point == null || point.Length != dimensions) {
 				throw new ArgumentException ("point added null or has invalid dimensionality");
@@ -118,7 +119,7 @@ namespace ndvoronoisharp
 			}
 			else {
 				/*candidate region */				
-				Region r = regions.First ();
+				HyperRegion r = regions.First ();
 				
 				bool matchAllConstraints = false;
 				while (!matchAllConstraints) {
@@ -127,7 +128,7 @@ namespace ndvoronoisharp
 						var constraint = constraintInfo.Key;
 						var foreingRegion = constraintInfo.Value;
 						
-						if (!constraint.Verifies (point))
+						if (!constraint.ContainsSubspace (point))
 							r = foreingRegion;
 					}
 					matchAllConstraints = true;
