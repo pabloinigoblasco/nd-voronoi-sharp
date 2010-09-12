@@ -22,11 +22,19 @@ using System.Text;
 
 namespace ndvoronoisharp
 {
+    /// <summary>
+    /// This is a nuclei in the voronoi Map. They are the center of the Voronoi Regions and the nodes
+    /// in the delunai Graph.
+    /// </summary>
+    /// <remarks>
+    /// As it is one of the most stable objects, a lot of data has been set here like lists, etc. 
+    /// </remarks>
     public class Nuclei
     {
         public bool IsDelunaiBound { get; internal set; }
         public HyperRegion VoronoiHyperRegion { get; private set; }
-        public IEnumerable<Nuclei> NucleiNeigbourgs { get { return VoronoiHyperRegion.NeighbourgRegions.Select(nhr => nhr.Nuclei); } }
+        internal List<Nuclei> nucleiNeigbourgs { get; private set; }
+        public IEnumerable<Nuclei> NucleiNeigbourgs { get { return nucleiNeigbourgs; } }
 
         internal List<Simplice> simplices;
         internal double[] coordinates { get; private set; }
@@ -35,6 +43,7 @@ namespace ndvoronoisharp
             this.coordinates = coordinates;
             this.VoronoiHyperRegion = thisRegion;
             this.simplices = new List<Simplice>();
+            this.nucleiNeigbourgs = new List<Nuclei>();
         }
     }
 }

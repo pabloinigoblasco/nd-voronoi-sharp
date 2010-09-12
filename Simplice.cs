@@ -30,6 +30,24 @@ namespace ndvoronoisharp
     {
         public Nuclei[] Nucleis { get; private set; }
 
+        private SimpliceCentroid voroniVertex;
+        private double squaredDistance;
+
+        /// <summary>
+        /// This method calculates the n-dimensional centroid of the hyper-sphere that bounds all his Nucleis.
+        /// </summary>
+        /// <returns></returns>
+        public SimpliceCentroid VoronoiVertex
+        {
+            get 
+            {
+                if (voroniVertex == null)
+                    CalculateSimpliceCentroid();
+
+                return voroniVertex;
+            }
+        }
+
         /// <summary>
         /// The number of nodes must be n+1 dimensional where n is the dimensions of the problem
         /// </summary>
@@ -40,13 +58,38 @@ namespace ndvoronoisharp
         }
 
         /// <summary>
-        /// This method calculates the n-dimensional centroid of the hyper-sphere that bounds all his Nucleis.
+        /// This method asserts if a point in the n-dimensional space is inside or intersecting with the 
+        /// circum-hypersphere of this siplice
         /// </summary>
+        /// <param name="point"></param>
         /// <returns></returns>
-        public VoronoiVertex CalculateSimpliceCentroid()
+        public bool MatchInsideHyperSphere(double[] point)
         {
-            throw new NotImplementedException();
+            if (voroniVertex == null)
+                CalculateSimpliceCentroid();
+
+            double sum = 0;
+            for (int i = 0; i < point.Length; i++)
+                sum += point[i] * point[i];
+
+            return sum <= squaredDistance;
         }
-         
+
+        /// <summary>
+        /// This is a lazy calculation of the voronoi Vertex, its not calculated if it isn't required.
+        /// </summary>
+        private void CalculateSimpliceCentroid()
+        {
+
+
+            throw new NotImplementedException("Solve System");
+            /**
+             * /
+             */
+
+
+            this.voroniVertex = new SimpliceCentroid(null);
+            squaredDistance = double.NaN;
+        }
     }
 }

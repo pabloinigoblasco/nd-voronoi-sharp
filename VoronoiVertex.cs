@@ -22,10 +22,10 @@ using System.Text;
 
 namespace ndvoronoisharp
 {
-    public class VoronoiVertex
+    public class SimpliceCentroid
     {
         double[] coordinates;
-        internal VoronoiVertex(double[] coordinates)
+        internal SimpliceCentroid(double[] coordinates)
         {
             this.coordinates = coordinates;
         }

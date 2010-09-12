@@ -17,7 +17,7 @@ namespace Voronoi2DTestingWindow
 		public MainClass()
 		{
 			this.WindowState=System.Windows.Forms.FormWindowState.Maximized;
-			VoronoiDiagram voronoi=new VoronoiDiagram(3);
+			VoronoiDelunayDiagram voronoi=new VoronoiDelunayDiagram(3);
 			this.Paint+=paint_event;
 			
 		}

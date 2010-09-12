@@ -18,8 +18,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DotNumerics;
-using DotNumerics.LinearAlgebra;
 using ndvoronoisharp.implementations;
 
 namespace ndvoronoisharp
@@ -32,37 +30,54 @@ namespace ndvoronoisharp
 		/*Public properties*/
 
 		public Nuclei Nuclei{get; private set;}
-        public IEnumerable<VoronoiVertex> VoronoiVertexes { get { return voronoiVertexes; } }
-        public IEnumerable<HyperRegion> NeighbourgRegions { get { return lazyConstraintsMap.Values; } }
+        public IEnumerable<SimpliceCentroid> VoronoiVertexes { get { return Nuclei.simplices.Select(s => s.VoronoiVertex); } }
+        public IEnumerable<HyperRegion> NeighbourgRegions { get { return Nuclei.NucleiNeigbourgs.Select(n => n.VoronoiHyperRegion); } }
         public bool IsBoundingRegion { get { return this.Nuclei.IsDelunaiBound; } }
 
         /*Internal properties*/
-
         internal int ProblemDimensionality { get { return Nuclei.coordinates.Length; } }
-        internal List<VoronoiVertex> voronoiVertexes;
 
-        internal IEnumerable<HyperPlaneConstraint> Constraints { get { return lazyConstraintsMap.Keys; } }
-        internal Dictionary<HyperPlaneConstraint, HyperRegion> lazyConstraintsMap
+        internal Dictionary<HyperRegion, HyperPlaneConstraint> lazyConstraintsMap
         {
             get
             {
-                if (constraints == null)
+                var oldAndDeletedNeighbourgs = neighboursConstraintMap.Keys.Except(NeighbourgRegions);
+                var newNeighbourgs=NeighbourgRegions.Except(neighboursConstraintMap.Keys);
+
+                foreach (var toDelete in oldAndDeletedNeighbourgs)
+                    neighboursConstraintMap.Remove(toDelete);
+
+                foreach(var newNeighbour in newNeighbourgs)
                 {
-                    throw new NotImplementedException("chek if this code is ok.");
-                    //build the new bound between the matching region centre and the new point
-                   /* DefaultConstraint newBoundConstraint = new DefaultConstraint(newRegion.Nuclei.coordinates, matchingRegion.Nuclei.coordinates);
-                    newRegion.constraints.Add(newBoundConstraint, matchingRegion);
+                    HyperPlaneConstraint constraint=new DefaultConstraint(this.Nuclei.coordinates,newNeighbour.Nuclei.coordinates);
+                    neighboursConstraintMap.Add(newNeighbour, constraint);
+                    newNeighbour.neighboursConstraintMap.Add(this, new InverseConstraintDecorator(constraint));
+                 }
 
-                    //adding the inverse constraint to the maching region.
-                    matchingRegion.constraints.Add(new InverseConstraintDecorator(newBoundConstraint), newRegion);*/
-
-                    //Distinct, maybe they are repeated
-                }
-                return constraints;
+                return neighboursConstraintMap;
             }
         }
-        private Dictionary<HyperPlaneConstraint, HyperRegion> constraints;
-		
+        private Dictionary<HyperRegion,HyperPlaneConstraint> neighboursConstraintMap;
+
+        /// <summary>
+        /// This function checks if a point in the n-dimensional space is contained in this
+        /// Voronoi-HypeRegion
+        /// </summary>
+        public bool ContainsPoint(double[] point)
+        {
+            if (point.Length != this.ProblemDimensionality)
+                throw new ArgumentException("Invalid dimensionality of the point");
+
+            foreach (var constraintInfo in lazyConstraintsMap)
+            {
+                var constraint = constraintInfo.Value;
+                var foreingRegion = constraintInfo.Key;
+
+                if (!constraint.semiHyperSpaceMatch(point))
+                    return false;
+            }
+            return true;
+        }
 		
 		
 		/// <summary>
@@ -71,30 +86,10 @@ namespace ndvoronoisharp
 		internal HyperRegion (double[] center)
 		{
             this.Nuclei = new Nuclei(center, this);
+            neighboursConstraintMap = new Dictionary<HyperRegion, HyperPlaneConstraint>();
 		}
 		
 		
-		private void Permutations(int permutationSize, IEnumerable<HyperPlaneConstraint> ConstraintBag, HyperPlaneConstraint[]CurrentVertexConstraints,List<HyperPlaneConstraint[]> constraintsPermutations)
-		{
-			if(permutationSize==0)
-			{
-				constraintsPermutations.Add(CurrentVertexConstraints);
-				return;
-			}
-			else
-			{
-				//first time
-				if(CurrentVertexConstraints==null)
-					//to get a vertex we need n constraints where n==dimensionality of the problem
-					CurrentVertexConstraints=new HyperPlaneConstraint[ProblemDimensionality];
-				   
-				foreach (var constr in ConstraintBag)
-				{
-					CurrentVertexConstraints[permutationSize-1]=constr;
-					Permutations(permutationSize-1,ConstraintBag.Except(Enumerable.Repeat(constr,1)),CurrentVertexConstraints,constraintsPermutations);
-				}
-				
-			}
-		}
+		
 	}
 }
