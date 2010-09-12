@@ -24,7 +24,8 @@ namespace ndvoronoisharp
 {
     public class SimpliceCentroid
     {
-        double[] coordinates;
+        internal readonly double[] coordinates;
+        public double[] Coordinates { get { return coordinates; } }
         internal SimpliceCentroid(double[] coordinates)
         {
             this.coordinates = coordinates;

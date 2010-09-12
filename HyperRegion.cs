@@ -32,7 +32,7 @@ namespace ndvoronoisharp
 		public Nuclei Nuclei{get; private set;}
         public IEnumerable<SimpliceCentroid> VoronoiVertexes { get { return Nuclei.simplices.Select(s => s.VoronoiVertex); } }
         public IEnumerable<HyperRegion> NeighbourgRegions { get { return Nuclei.NucleiNeigbourgs.Select(n => n.VoronoiHyperRegion); } }
-        public bool IsBoundingRegion { get { return this.Nuclei.IsDelunaiBound; } }
+        public bool IsBoundingRegion { get { return this.Nuclei.ConvexBoundary; } }
 
         /*Internal properties*/
         internal int ProblemDimensionality { get { return Nuclei.coordinates.Length; } }
@@ -41,8 +41,8 @@ namespace ndvoronoisharp
         {
             get
             {
-                var oldAndDeletedNeighbourgs = neighboursConstraintMap.Keys.Except(NeighbourgRegions);
-                var newNeighbourgs=NeighbourgRegions.Except(neighboursConstraintMap.Keys);
+                var oldAndDeletedNeighbourgs = neighboursConstraintMap.Keys.Except(NeighbourgRegions).ToArray();
+                var newNeighbourgs=NeighbourgRegions.Except(neighboursConstraintMap.Keys).ToArray();
 
                 foreach (var toDelete in oldAndDeletedNeighbourgs)
                     neighboursConstraintMap.Remove(toDelete);
@@ -83,9 +83,9 @@ namespace ndvoronoisharp
 		/// <summary>
 		/// constructor visibility is restricted to assert dimensionality coherence 
 		/// </summary>
-		internal HyperRegion (double[] center)
+		internal HyperRegion (double[] center, object data)
 		{
-            this.Nuclei = new Nuclei(center, this);
+            this.Nuclei = new Nuclei(center, this,data);
             neighboursConstraintMap = new Dictionary<HyperRegion, HyperPlaneConstraint>();
 		}
 		

@@ -32,7 +32,7 @@ namespace ndvoronoisharp
     public class Simplice
     {
         public Nuclei[] Nucleis { get; private set; }
-        public int Dimensionality { get { return Nucleis.First().coordinates.Length - 1; } }
+        public int Dimensionality { get { return Nucleis.First().coordinates.Length ; } }
 
         private SimpliceCentroid voroniVertex;
         private double squaredDistance;
@@ -74,7 +74,10 @@ namespace ndvoronoisharp
 
             double sum = 0;
             for (int i = 0; i < point.Length; i++)
-                sum += point[i] * point[i];
+            {
+                double diff=point[i] - this.voroniVertex.coordinates[i];
+                sum += (diff*diff);
+            }
 
             return sum <= squaredDistance;
         }
@@ -90,15 +93,14 @@ namespace ndvoronoisharp
                 throw new ArgumentException("Incorrect dimensionality in the nucleis. some nucleis have no the right dimensionality");
 
             Matrix mA = new Matrix(Dimensionality,Dimensionality);
-            Matrix mb=new Matrix(Nucleis.Length,1);
-            int cont=1;
-            for (int i = 0; i < Nucleis.Length; i++,cont++)
+            Matrix mb=new Matrix(Dimensionality,1);
+            for (int i = 0; i < Dimensionality; i++)
             {
                 mb[i,0]=0;
-                for(int j=0;j<Nucleis.Length;j++)
+                for(int j=0;j<Dimensionality;j++)
                 {
-                    mA[i,j] = Nucleis[0].coordinates[j] - Nucleis[cont].coordinates[j];
-                    mb[i,0]+= mA[i,j]*((Nucleis[0].coordinates[j]+Nucleis[cont].coordinates[j])/2.0);
+                    mA[i,j] = Nucleis[0].coordinates[j] - Nucleis[i+1].coordinates[j];
+                    mb[i,0]+= mA[i,j]*((Nucleis[0].coordinates[j]+Nucleis[i+1].coordinates[j])/2.0);
                 }
 
             }
@@ -108,8 +110,16 @@ namespace ndvoronoisharp
             double[] dataResult=result.GetColumnVector(0).ToArray();
             voroniVertex = new SimpliceCentroid(dataResult);
             for (int i = 0; i < dataResult.Length; i++)
-                squaredDistance += dataResult[i] * dataResult[i];
+            {
+                double diff=dataResult[i]-Nucleis.First().Coordinates[i];
+                squaredDistance += diff * diff;
+            }
             
+        }
+
+        public override string ToString()
+        {
+            return string.Join(", ", Nucleis.Select(nc => nc.ToString()).ToArray());
         }
     }
 }

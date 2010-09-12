@@ -32,29 +32,43 @@ namespace ndvoronoisharp
     /// </remarks>
     public class Nuclei
     {
-        public bool IsDelunaiBound { get; internal set; }
+        public bool ConvexBoundary { get; internal set; }
         public HyperRegion VoronoiHyperRegion { get; private set; }
         internal List<Nuclei> nucleiNeigbourgs { get; private set; }
         public IEnumerable<Nuclei> NucleiNeigbourgs { get { return nucleiNeigbourgs; } }
+        public IEnumerable<Simplice> NucleiSimplices { get { return simplices; } }
+        public double[] Coordinates { get { return coordinates; } }
+        public object Data;
 
+        
         internal List<Simplice> simplices;
-        internal double[] coordinates { get; private set; }
-        internal Nuclei(double[] coordinates,HyperRegion thisRegion)
+        internal readonly double[] coordinates;
+        
+
+        internal Nuclei(double[] coordinates,HyperRegion thisRegion,object data)
         {
             this.coordinates = coordinates;
             this.VoronoiHyperRegion = thisRegion;
             this.simplices = new List<Simplice>();
             this.nucleiNeigbourgs = new List<Nuclei>();
+            this.Data = data;
         }
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < coordinates.Length - 1; i++)
-                sb.Append(coordinates[i] + " , ");
-            sb.Append(coordinates.Last());
+            if (Data != null)
+            {
+                return Data.ToString();
+            }
+            else
+            {
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < coordinates.Length - 1; i++)
+                    sb.Append(coordinates[i] + " , ");
+                sb.Append(coordinates.Last());
 
 
-            return base.ToString()+ " || "+ sb.ToString();
+                return base.ToString() + " || " + sb.ToString().ToString();
+            }
         }
 
         internal static bool AssertCoLinear(params Nuclei[] nucleis)
@@ -78,5 +92,10 @@ namespace ndvoronoisharp
             return m.Rank()==desiredRank;
         }
 
+
+        internal int CountSharedFaces(Nuclei oldNeighbourg)
+        {
+            return this.simplices.Count(s => s.Nucleis.Contains(oldNeighbourg));
+        }
     }
 }

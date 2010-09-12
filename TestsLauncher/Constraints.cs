@@ -53,7 +53,7 @@ namespace Tests
         public void BasicVoronoiAddOne()
         {
             VoronoiDelunayDiagram gdv = new VoronoiDelunayDiagram(4);
-            HyperRegion reg= gdv.AddNewPointCoordinates(10, 3, 45, 2);
+            HyperRegion reg= gdv.AddNewPoint(new double[]{10, 3, 45, 2});
 
             Assert.AreEqual(gdv.VoronoiRegions.Count(), 1);
             Assert.AreEqual(gdv.VoronoiRegions.Single(), reg);
@@ -67,7 +67,7 @@ namespace Tests
         public void BasicVoronoiAddOne_RegionBasicFunctionality()
         {
             VoronoiDelunayDiagram gdv = new VoronoiDelunayDiagram(4);
-            HyperRegion reg = gdv.AddNewPointCoordinates(10, 3, 45, 2);
+            HyperRegion reg = gdv.AddNewPoint(new double[]{10, 3, 45, 2});
 
             Assert.IsTrue(reg.ContainsPoint(new double[] { 1, 2, 3, 4 }));
         }
@@ -76,8 +76,8 @@ namespace Tests
         public void BasicVoronoiAddTwo()
         {
             VoronoiDelunayDiagram gdv = new VoronoiDelunayDiagram(4);
-            HyperRegion reg = gdv.AddNewPointCoordinates(10, 3, 45, 2);
-            HyperRegion regB = gdv.AddNewPointCoordinates(10, 50, 45, 50);
+            HyperRegion reg = gdv.AddNewPoint(new double[]{10, 3, 45, 2});
+            HyperRegion regB = gdv.AddNewPoint(new double[] { 10, 50, 45, 50 });
 
             Assert.AreEqual(gdv.VoronoiRegions.Count(), 2);
             Assert.IsTrue(gdv.VoronoiRegions.Contains(reg));
@@ -96,8 +96,8 @@ namespace Tests
         public void BasicVoronoiAddTwo_BasicFunctionality()
         {
             VoronoiDelunayDiagram gdv = new VoronoiDelunayDiagram(4);
-            HyperRegion reg = gdv.AddNewPointCoordinates(10, 3, 45, 2);
-            HyperRegion regB = gdv.AddNewPointCoordinates(10, 50, 45, 50);
+            HyperRegion reg = gdv.AddNewPoint(new double[]{10, 3, 45, 2});
+            HyperRegion regB = gdv.AddNewPoint(new double[]{10, 50, 45, 50});
             double[] testingPoint =new double[]{10,4,43,0};
 
             Assert.IsTrue(reg.ContainsPoint(testingPoint));
@@ -109,9 +109,9 @@ namespace Tests
         public void BasicVoronoiAddThree()
         {
             VoronoiDelunayDiagram gdv = new VoronoiDelunayDiagram(4);
-            HyperRegion reg = gdv.AddNewPointCoordinates(10, 3, 45, 2);
-            HyperRegion regB = gdv.AddNewPointCoordinates(10, 50, 45, 50);
-            HyperRegion regC = gdv.AddNewPointCoordinates(10, 50, -45, -1);
+            HyperRegion reg = gdv.AddNewPoint(new double[]{10, 3, 45, 2});
+            HyperRegion regB = gdv.AddNewPoint(new double[]{10, 50, 45, 50});
+            HyperRegion regC = gdv.AddNewPoint(new double[]{10, 50, -45, -1});
 
             Assert.AreEqual(gdv.VoronoiRegions.Count(), 3);
             Assert.IsTrue(gdv.VoronoiRegions.Contains(reg));
@@ -135,9 +135,9 @@ namespace Tests
         public void BasicVoronoiAddThree_BasicFunctionality()
         {
             VoronoiDelunayDiagram gdv = new VoronoiDelunayDiagram(4);
-            HyperRegion reg = gdv.AddNewPointCoordinates(10, 3, 45, 2);
-            HyperRegion regB = gdv.AddNewPointCoordinates(10, 50, 45, 50);
-            HyperRegion regC = gdv.AddNewPointCoordinates(10, 50, -45, -1);
+            HyperRegion reg = gdv.AddNewPoint(new double[]{10, 3, 45, 2});
+            HyperRegion regB = gdv.AddNewPoint(new double[]{10, 50, 45, 50});
+            HyperRegion regC = gdv.AddNewPoint(new double[]{10, 50, -45, -1});
 
             double[] testingPoint = new double[] { 10, 50, 40, 50 };
 
@@ -151,10 +151,10 @@ namespace Tests
         public void BasicVoronoiAddFour()
         {
             VoronoiDelunayDiagram gdv = new VoronoiDelunayDiagram(4);
-            HyperRegion reg = gdv.AddNewPointCoordinates(10, 3, 45, 2);
-            HyperRegion regB = gdv.AddNewPointCoordinates(10, 50, 45, 50);
-            HyperRegion regC = gdv.AddNewPointCoordinates(10, 50, -45, -1);
-            HyperRegion regD = gdv.AddNewPointCoordinates(10, 0, -45, -21);
+            HyperRegion reg = gdv.AddNewPoint(new double[]{10, 3, 45, 2});
+            HyperRegion regB = gdv.AddNewPoint(new double[]{10, 50, 45, 50});
+            HyperRegion regC = gdv.AddNewPoint(new double[]{10, 50, -45, -1});
+            HyperRegion regD = gdv.AddNewPoint(new double[] { 10, 0, -45, -21 });
 
             Assert.AreEqual(gdv.VoronoiRegions.Count(), 4);
             Assert.IsTrue(gdv.VoronoiRegions.Contains(reg));
@@ -183,10 +183,10 @@ namespace Tests
         public void BasicVoronoiAddFour_BasicFunctionality()
         {
             VoronoiDelunayDiagram gdv = new VoronoiDelunayDiagram(4);
-            HyperRegion reg = gdv.AddNewPointCoordinates(10, 3, 45, 2);
-            HyperRegion regB = gdv.AddNewPointCoordinates(10, 50, 45, 50);
-            HyperRegion regC = gdv.AddNewPointCoordinates(10, 50, -45, -1);
-            HyperRegion regD = gdv.AddNewPointCoordinates(10, 0, -45, -21);
+            HyperRegion reg = gdv.AddNewPoint(new double[]{10, 3, 45, 2});
+            HyperRegion regB = gdv.AddNewPoint(new double[]{10, 50, 45, 50});
+            HyperRegion regC = gdv.AddNewPoint(new double[]{10, 50, -45, -1});
+            HyperRegion regD = gdv.AddNewPoint(new double[]{10, 0, -45, -21});
 
             double[] testingPoint = new double[] { 10, 50, -40, 5 };
 
@@ -195,6 +195,112 @@ namespace Tests
             Assert.IsTrue(regC.ContainsPoint(testingPoint));
             Assert.IsFalse(regD.ContainsPoint(testingPoint));
             Assert.AreEqual(gdv.GetMatchingRegion(testingPoint), regC);
+        }
+
+        [Test]
+        public VoronoiDelunayDiagram BuildOneSimplice_2D()
+        {
+            VoronoiDelunayDiagram gdv = new VoronoiDelunayDiagram(2);
+            HyperRegion reg = gdv.AddNewPoint("Cordoba", new double[]{20, 5});
+            HyperRegion regB = gdv.AddNewPoint("Huelva", new double[]{1, 1});
+            HyperRegion regC = gdv.AddNewPoint("Cadiz", new double[]{40, 1});
+
+            double[] testingPoint=new double[]{4,4};
+
+            Assert.IsFalse(reg.ContainsPoint(testingPoint));
+            Assert.True(regB.ContainsPoint(testingPoint));
+            Assert.IsFalse(regC.ContainsPoint(testingPoint));
+            Assert.AreEqual(gdv.GetMatchingRegion(testingPoint), regB);
+
+            Assert.IsTrue(gdv.Nucleis.All(n=>n.ConvexBoundary));
+            Assert.IsTrue(gdv.Simplices.Count() == 1);
+            Assert.IsTrue(gdv.Simplices.Single().Nucleis.Intersect(gdv.Nucleis).Count()==3);
+
+            Assert.IsTrue(gdv.Nucleis.All(n => n.NucleiSimplices.Contains(gdv.Simplices.Single())));
+
+            return gdv;
+        }
+
+        [Test]
+        public void BuildOneSimplice_AndCheckVoronoiFeatures_2D()
+        {
+            VoronoiDelunayDiagram gdv = BuildOneSimplice_2D();
+            Assert.IsTrue(gdv.VoronoiVertexes.Count() == 1);
+            Assert.IsTrue(gdv.VoronoiRegions.All(r=>r.VoronoiVertexes.Count()==1));
+        }
+
+        [Test]
+        public void BuildAndRefactorOneSimpliceInTwoSimplices_2D()
+        {
+            VoronoiDelunayDiagram gdv = new VoronoiDelunayDiagram(2);
+            HyperRegion reg = gdv.AddNewPoint("Cordoba", new double[] { 20, 5 });
+            HyperRegion regB = gdv.AddNewPoint("Huelva", new double[] { 1, 1 });
+            HyperRegion regC = gdv.AddNewPoint("Cadiz", new double[] { 40, 1 });
+            HyperRegion regD =gdv.AddNewPoint("Sevilla", new double[] { 10, -10 });
+
+            Assert.IsTrue(gdv.VoronoiRegions.Count() == 4);
+            Assert.IsTrue(gdv.Simplices.Count()==2);
+            Assert.IsTrue(gdv.VoronoiVertexes.Count() == 2);
+
+            Assert.IsTrue(regD.Nuclei.NucleiSimplices.Count() == 2);
+            Assert.IsTrue(reg.Nuclei.NucleiSimplices.Count() == 2);
+            Assert.IsTrue(regB.Nuclei.NucleiSimplices.Count() == 1);
+            Assert.IsTrue(regC.Nuclei.NucleiSimplices.Count() == 1);
+        }
+
+        [Test]
+        public void BuildAndRefactorTwoSimpliceInTwoSimplices_2D()
+        {
+            VoronoiDelunayDiagram gdv = new VoronoiDelunayDiagram(2);
+            HyperRegion cordoba = gdv.AddNewPoint("Cordoba", new double[] { 20, 5 });
+            HyperRegion huelva = gdv.AddNewPoint("Huelva", new double[] { 1, 1 });
+            HyperRegion cadiz = gdv.AddNewPoint("Cadiz", new double[] { 5, -13 });
+
+            Assert.IsTrue(cordoba.NeighbourgRegions.Contains(huelva));
+            Assert.IsTrue(cordoba.NeighbourgRegions.Contains(cadiz));
+            Assert.IsTrue(huelva.NeighbourgRegions.Contains(cordoba));
+            Assert.IsTrue(huelva.NeighbourgRegions.Contains(cadiz));
+            Assert.IsTrue(cadiz.NeighbourgRegions.Contains(cordoba));
+            Assert.IsTrue(cadiz.NeighbourgRegions.Contains(huelva));
+
+            HyperRegion malaga = gdv.AddNewPoint("Malaga", new double[] { 20, -20 });
+
+            Assert.IsTrue(cordoba.NeighbourgRegions.Contains(huelva));
+            Assert.IsTrue(cordoba.NeighbourgRegions.Contains(cadiz));
+            Assert.IsTrue(huelva.NeighbourgRegions.Contains(cordoba));
+            Assert.IsTrue(huelva.NeighbourgRegions.Contains(cadiz));
+            Assert.IsTrue(cadiz.NeighbourgRegions.Contains(cordoba));
+            Assert.IsTrue(cadiz.NeighbourgRegions.Contains(huelva));
+
+            HyperRegion sevilla = gdv.AddNewPoint("Sevilla", new double[] { 10, -10 });
+            
+            Assert.AreEqual(gdv.VoronoiRegions.Count(), 5);
+            Assert.AreEqual(gdv.Simplices.Count(), 4);
+            Assert.AreEqual(gdv.VoronoiVertexes.Count() ,4);
+
+            Assert.IsFalse(huelva.NeighbourgRegions.Contains(malaga));
+            Assert.IsFalse(malaga.NeighbourgRegions.Contains(huelva));
+            Assert.IsFalse(cordoba.NeighbourgRegions.Contains(cadiz));
+            Assert.IsFalse(cadiz.NeighbourgRegions.Contains(cordoba));
+
+
+            Assert.AreEqual(sevilla.Nuclei.NucleiSimplices.Count() , 4);
+            Assert.AreEqual(cordoba.Nuclei.NucleiSimplices.Count() , 2);
+            Assert.AreEqual(huelva.Nuclei.NucleiSimplices.Count() , 2);
+            Assert.AreEqual(malaga.Nuclei.NucleiSimplices.Count() , 2);
+        }
+
+
+        [Test]
+        public void BuildOneSimplice_3D()
+        {
+            Assert.Fail();
+        }
+
+        [Test]
+        public void BuildOneSimplice_4D()
+        {
+            Assert.Fail();
         }
 
       
