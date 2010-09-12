@@ -17,6 +17,7 @@
 
 using System;
 using System.Linq;
+using MathNet.Numerics.LinearAlgebra;
 
 namespace ndvoronoisharp
 {
@@ -52,10 +53,10 @@ namespace ndvoronoisharp
 		/// <summary>
 		/// Example in the plane Ax+By+Cz<D in R3, coefficents would be [A,B,C,D]
 		/// </summary>
-		private readonly double[] coefficents;
+		private readonly Vector coefficents;
 
-		public double this[int coordinate] {
-			get { return coefficents[coordinate]; }
+		public double this[int coordinateIndex] {
+			get { return coefficents[coordinateIndex]; }
 		}
 
 		/// <summary>
@@ -65,17 +66,18 @@ namespace ndvoronoisharp
 		/// </param>
 		public DefaultConstraint (double[] ownerPoint, double[] foreignPoint)
 		{
-			double[] middlePoint = new double[ownerPoint.Length];
-			coefficents = new double[ownerPoint.Length + 1];
-			
+            coefficents = new Vector(ownerPoint.Length + 1) ;
+            coefficents[coefficents.Length - 1] = 0;
+
 			//calculating coefficents except the independent coefficent
 			for (int i = 0; i < ownerPoint.Length; i++) {
-				middlePoint[i] = (foreignPoint[i] + ownerPoint[i]) / 2f;
                 coefficents[i] = ownerPoint[i] - foreignPoint[i];
+                //calculating the independent coefficent
+                coefficents[coefficents.Length - 1] += coefficents[i] * ((foreignPoint[i] + ownerPoint[i]) / 2f);
 			}
 			
-			//calculating the independent coefficent
-			coefficents[coefficents.Length - 1] = Enumerable.Range (0, coefficents.Length - 2).Sum (i => middlePoint[i] * coefficents[i]);
+			
+			
 		}
 
         /// <summary>
@@ -87,7 +89,7 @@ namespace ndvoronoisharp
         /// <param name="coefficents"></param>
         internal DefaultConstraint(double[] coefficents)
         {
-            this.coefficents = coefficents;
+            this.coefficents = new Vector(coefficents);
         }
 
 		/// <summary>
@@ -98,7 +100,7 @@ namespace ndvoronoisharp
 			//here should be a verification for the dimensionality. But we're simplifying and looking for efficency.
 			double res = Enumerable.Range (0, point.Length).Sum (i => point[i] * coefficents[i]);
 			
-			return res > coefficents[coefficents.Length - 1];
+			return res > coefficents.Last();
 		}
 
 

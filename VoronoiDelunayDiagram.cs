@@ -19,13 +19,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using ndvoronoisharp.implementations;
+using System.Diagnostics;
 
 namespace ndvoronoisharp
 {
 	public class VoronoiDelunayDiagram
 	{
         public readonly int dimensions;
-		public IEnumerable<HyperRegion> Regions 
+		public IEnumerable<HyperRegion> VoronoiRegions 
         {
 			get { return regions; }
 		}
@@ -72,15 +73,24 @@ namespace ndvoronoisharp
 			
 			HyperRegion matchingRegion = this.GetMatchingRegion (newPoint);
             HyperRegion newRegion = new HyperRegion(newPoint);
+            this.regions.Add(newRegion);
 
+            //the very first one region
             if (matchingRegion == null)
             {
-                //this is the very first one vertex
-                //just addit to the bounding
-
                 newRegion.Nuclei.IsDelunaiBound = true;
-                this.regions.Add(newRegion);
             }
+
+            //the second region
+            else if (matchingRegion != null && regions.Count == 2)
+            {
+                newRegion.Nuclei.IsDelunaiBound = true;
+                matchingRegion.Nuclei.nucleiNeigbourgs.Add(newRegion.Nuclei);
+                newRegion.Nuclei.nucleiNeigbourgs.Add(matchingRegion.Nuclei);
+                
+            }
+            
+            //three or more regions
             else
             {
                 //Get all the simplices of this region and neighbourgs
@@ -89,50 +99,116 @@ namespace ndvoronoisharp
                 //that contains the new point
                 //this simplicitis are selected, and latter will be removed since
                 //their tesellation will be refactored
-                var matchingSimplicies = matchingRegion.NeighbourgRegions
+                var affectedSimplicies = matchingRegion.NeighbourgRegions
                                         .Union(new HyperRegion[] { matchingRegion })
                                                 .Select(r => r.Nuclei.simplices as IEnumerable<Simplice>)
                                                 .Aggregate((acc, simps) => acc.Union(simps))
                                                 .Distinct()
-                                                .Where(s=>s.MatchInsideHyperSphere(newPoint));
-
-
-                //we have to regenerate a chunk of the delunai map. All the points to remake belongs
-                //to a simplice that match in his hyperSphere the new point.
-                var PointsToRemake = matchingSimplicies.Select(s => s.Nucleis as IEnumerable<Nuclei>)
-                                                     .Aggregate((acc, nucs) => acc.Union(nucs))
-                                                     .Distinct()
-                                                     .Union(new Nuclei[]{newRegion.Nuclei});
-
-                
-                List<Simplice> candidateSimplices = new List<Simplice>();
-                generateCombinatorySimplicies(dimensions + 1, PointsToRemake, null, candidateSimplices);
-
-                List<Simplice> newTesellation = new List<Simplice>();
-                foreach (Simplice s in candidateSimplices)
+                                                .Where(s => s.CheckIsInsideHyperSphere(newPoint));
+                //standard case
+                if (affectedSimplicies.Any())
                 {
-                    bool containsAnyPoint=false;
-                    foreach (var p in PointsToRemake.Except(s.Nucleis))
+
+                    //we have to regenerate a chunk of the delunai map. All the points to remake belongs
+                    //to a simplice that match in his hyperSphere the new point.
+                    IEnumerable<Nuclei> PointsToRemake = affectedSimplicies.Select(s => s.Nucleis as IEnumerable<Nuclei>)
+                                                         .Aggregate((acc, nucs) => acc.Union(nucs))
+                                                         .Distinct()
+                                                         .Union(new Nuclei[] { newRegion.Nuclei });
+
+
+                    List<Simplice> candidateSimplices = new List<Simplice>();
+                    generateCombinatorySimplicies(dimensions + 1, PointsToRemake, null, candidateSimplices);
+                    candidateSimplices.RemoveAll(s => Nuclei.AssertRank(s.Nucleis, dimensions));
+
+                    if (!candidateSimplices.Any())
+                        BuildTesellationAndSetNeiborghood(candidateSimplices);
+                    else
+                        throw new NotImplementedException("Is this case possible?");
+                }
+                //strage case
+                else
+                {
+                    //This path must check aligned and neigbour points.
+                    newRegion.Nuclei.IsDelunaiBound = true;
+
+                    //this selection is distinct. I don't just search in neiborghood but in all unconnected points
+                    IEnumerable<Nuclei> notSimpliceNuclei = this.Nucleis.Where(n => !n.simplices.Any())
+                                                                .Union(new Nuclei[] { newRegion.Nuclei });
+                    Debug.Print("Isolated point {0}. Nº total IsolatedPoints:{1}", newRegion, notSimpliceNuclei.Count());
+
+                    bool achievedTesellation = false;
+                    if (notSimpliceNuclei.Count() > dimensions)
                     {
-                        if (s.MatchInsideHyperSphere(p.coordinates))
+                        List<Simplice> candidateSimplices = new List<Simplice>();
+                        generateCombinatorySimplicies(dimensions + 1, notSimpliceNuclei, null, candidateSimplices);
+                        candidateSimplices.RemoveAll(s => Nuclei.AssertRank(s.Nucleis, dimensions));
+                        if (candidateSimplices.Any())
                         {
-                            containsAnyPoint = true;
-                            break;
+                            BuildTesellationAndSetNeiborghood(candidateSimplices);
+                            achievedTesellation = false;
+                        }
+                    }
+                    
+                    if(!achievedTesellation)
+                    {
+                        //this case is only usefull for firsts points when no simplicie exists
+                        //and all points can't build a simplicie.
+
+                        matchingRegion.Nuclei.nucleiNeigbourgs.Add(newRegion.Nuclei);
+                        newRegion.Nuclei.nucleiNeigbourgs.Add(matchingRegion.Nuclei);
+                        //there are points aligned. Mark As Neigbourg all oldRegion
+                        //Neighbourg that verifies
+                        HyperPlaneConstraint contraint = newRegion.lazyConstraintsMap[matchingRegion];
+                        foreach (var mRegNeighbour in matchingRegion.NeighbourgRegions)
+                        {
+#warning is this assertion correct? colinear, and what about coplanar?
+
+                            if (mRegNeighbour!=newRegion
+ 
+                                && !Nuclei.AssertCoLinear(matchingRegion.Nuclei,newRegion.Nuclei,mRegNeighbour.Nuclei))
+                            {
+                                mRegNeighbour.Nuclei.nucleiNeigbourgs.Add(newRegion.Nuclei);
+                                newRegion.Nuclei.nucleiNeigbourgs.Add(mRegNeighbour.Nuclei);
+                            }
                         }
                     }
 
-                    if (!containsAnyPoint)
-                        newTesellation.Add(s);
                 }
-
-                //TODO: Apply the new Teselation in the data Structures.
-
-
-
             }
 			
 			return newRegion;
 		}
+
+        private void BuildTesellationAndSetNeiborghood(List<Simplice> candidateSimplices)
+        {
+            List<Simplice> newTesellation = new List<Simplice>();
+            IEnumerable<Nuclei> pointsToRemake = candidateSimplices.Select(s => s.Nucleis as IEnumerable<Nuclei>)
+                                                                 .Aggregate((acc, nuc) => acc.Union(nuc));
+
+
+            foreach (Simplice s in candidateSimplices)
+            {
+                bool emptyHyperSphere = false;
+                foreach (var p in pointsToRemake.Except(s.Nucleis))
+                {
+                    if (s.CheckIsInsideHyperSphere(p.coordinates))
+                    {
+                        emptyHyperSphere = true;
+                        break;
+                    }
+                }
+
+                if (!emptyHyperSphere)
+                {
+                    newTesellation.Add(s);
+                    //refactor bounds
+                    //aquellos nuclieis con alguna cara no compartida
+                    //es frontera.
+                }
+            }
+            //who are bounds? those that have less than dimensionality simplicities
+        }
 
         private void generateCombinatorySimplicies(int permutationSize, IEnumerable<Nuclei> AllNucleiBag, Nuclei[] CurrentNucleiCombination, List<Simplice> resultingSimplices)
         {
@@ -197,16 +273,18 @@ namespace ndvoronoisharp
 				
 				bool matchAllConstraints = false;
 				while (!matchAllConstraints) {
-					matchAllConstraints = false;
+					matchAllConstraints = true;
 					foreach (var constraintInfo in r.lazyConstraintsMap) {
 						var constraint = constraintInfo.Value;
 						var foreingRegion = constraintInfo.Key;
-						
-						if (!constraint.semiHyperSpaceMatch (point))
-							r = foreingRegion;
+
+                        if (!constraint.semiHyperSpaceMatch(point))
+                        {
+                            r = foreingRegion;
+                            matchAllConstraints = false;
+                            break;
+                        }
 					}
-                    //this is the region.
-					matchAllConstraints = true;
 				}
 				
 				return r;

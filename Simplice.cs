@@ -17,6 +17,9 @@
 
 using System;
 using System.Linq;
+using MathNet.Numerics.LinearAlgebra;
+using ndvoronoisharp.implementations;
+using System.Diagnostics;
 
 namespace ndvoronoisharp
 {
@@ -29,6 +32,7 @@ namespace ndvoronoisharp
     public class Simplice
     {
         public Nuclei[] Nucleis { get; private set; }
+        public int Dimensionality { get { return Nucleis.First().coordinates.Length - 1; } }
 
         private SimpliceCentroid voroniVertex;
         private double squaredDistance;
@@ -63,7 +67,7 @@ namespace ndvoronoisharp
         /// </summary>
         /// <param name="point"></param>
         /// <returns></returns>
-        public bool MatchInsideHyperSphere(double[] point)
+        public bool CheckIsInsideHyperSphere(double[] point)
         {
             if (voroniVertex == null)
                 CalculateSimpliceCentroid();
@@ -80,16 +84,32 @@ namespace ndvoronoisharp
         /// </summary>
         private void CalculateSimpliceCentroid()
         {
+            Debug.Print("Calculating Simplice centroid");
 
+            if (Nucleis.Any(n => n.coordinates.Length != Dimensionality))
+                throw new ArgumentException("Incorrect dimensionality in the nucleis. some nucleis have no the right dimensionality");
 
-            throw new NotImplementedException("Solve System");
-            /**
-             * /
-             */
+            Matrix mA = new Matrix(Dimensionality,Dimensionality);
+            Matrix mb=new Matrix(Nucleis.Length,1);
+            int cont=1;
+            for (int i = 0; i < Nucleis.Length; i++,cont++)
+            {
+                mb[i,0]=0;
+                for(int j=0;j<Nucleis.Length;j++)
+                {
+                    mA[i,j] = Nucleis[0].coordinates[j] - Nucleis[cont].coordinates[j];
+                    mb[i,0]+= mA[i,j]*((Nucleis[0].coordinates[j]+Nucleis[cont].coordinates[j])/2.0);
+                }
 
+            }
 
-            this.voroniVertex = new SimpliceCentroid(null);
-            squaredDistance = double.NaN;
+            Matrix result = mA.Solve(mb);
+            squaredDistance = 0;
+            double[] dataResult=result.GetColumnVector(0).ToArray();
+            voroniVertex = new SimpliceCentroid(dataResult);
+            for (int i = 0; i < dataResult.Length; i++)
+                squaredDistance += dataResult[i] * dataResult[i];
+            
         }
     }
 }

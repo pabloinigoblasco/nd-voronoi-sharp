@@ -19,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using MathNet.Numerics.LinearAlgebra;
 
 namespace ndvoronoisharp
 {
@@ -45,5 +46,37 @@ namespace ndvoronoisharp
             this.simplices = new List<Simplice>();
             this.nucleiNeigbourgs = new List<Nuclei>();
         }
+        public override string ToString()
+        {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < coordinates.Length - 1; i++)
+                sb.Append(coordinates[i] + " , ");
+            sb.Append(coordinates.Last());
+
+
+            return base.ToString()+ " || "+ sb.ToString();
+        }
+
+        internal static bool AssertCoLinear(params Nuclei[] nucleis)
+        {
+            return AssertRank(nucleis,1);
+        }
+
+        internal static bool AssertRank(Nuclei[] nucleis, int desiredRank)
+        {
+            if (nucleis.Length < desiredRank)
+                return false;
+
+            int workingSpaceDim=nucleis.First().coordinates.Length;
+            Matrix m = new Matrix(nucleis.Length,workingSpaceDim );
+            for(int i=0;i<nucleis.Length;i++)
+            {
+                for(int j=0;j<workingSpaceDim;j++)
+                    m[i,j]=nucleis[i].coordinates[j];
+            }
+
+            return m.Rank()==desiredRank;
+        }
+
     }
 }
