@@ -52,7 +52,7 @@ namespace Tests
         [Test]
         public void BasicVoronoiAddOne()
         {
-            VoronoiDelunayDiagram gdv = new VoronoiDelunayDiagram(4);
+            VoronoiDelunayGraph gdv = new VoronoiDelunayGraph(4);
             HyperRegion reg= gdv.AddNewPoint(new double[]{10, 3, 45, 2});
 
             Assert.AreEqual(gdv.VoronoiRegions.Count(), 1);
@@ -66,7 +66,7 @@ namespace Tests
         [Test]
         public void BasicVoronoiAddOne_RegionBasicFunctionality()
         {
-            VoronoiDelunayDiagram gdv = new VoronoiDelunayDiagram(4);
+            VoronoiDelunayGraph gdv = new VoronoiDelunayGraph(4);
             HyperRegion reg = gdv.AddNewPoint(new double[]{10, 3, 45, 2});
 
             Assert.IsTrue(reg.ContainsPoint(new double[] { 1, 2, 3, 4 }));
@@ -75,7 +75,7 @@ namespace Tests
         [Test]
         public void BasicVoronoiAddTwo()
         {
-            VoronoiDelunayDiagram gdv = new VoronoiDelunayDiagram(4);
+            VoronoiDelunayGraph gdv = new VoronoiDelunayGraph(4);
             HyperRegion reg = gdv.AddNewPoint(new double[]{10, 3, 45, 2});
             HyperRegion regB = gdv.AddNewPoint(new double[] { 10, 50, 45, 50 });
 
@@ -95,7 +95,7 @@ namespace Tests
         [Test]
         public void BasicVoronoiAddTwo_BasicFunctionality()
         {
-            VoronoiDelunayDiagram gdv = new VoronoiDelunayDiagram(4);
+            VoronoiDelunayGraph gdv = new VoronoiDelunayGraph(4);
             HyperRegion reg = gdv.AddNewPoint(new double[]{10, 3, 45, 2});
             HyperRegion regB = gdv.AddNewPoint(new double[]{10, 50, 45, 50});
             double[] testingPoint =new double[]{10,4,43,0};
@@ -108,7 +108,7 @@ namespace Tests
         [Test]
         public void BasicVoronoiAddThree()
         {
-            VoronoiDelunayDiagram gdv = new VoronoiDelunayDiagram(4);
+            VoronoiDelunayGraph gdv = new VoronoiDelunayGraph(4);
             HyperRegion reg = gdv.AddNewPoint(new double[]{10, 3, 45, 2});
             HyperRegion regB = gdv.AddNewPoint(new double[]{10, 50, 45, 50});
             HyperRegion regC = gdv.AddNewPoint(new double[]{10, 50, -45, -1});
@@ -134,7 +134,7 @@ namespace Tests
         [Test]
         public void BasicVoronoiAddThree_BasicFunctionality()
         {
-            VoronoiDelunayDiagram gdv = new VoronoiDelunayDiagram(4);
+            VoronoiDelunayGraph gdv = new VoronoiDelunayGraph(4);
             HyperRegion reg = gdv.AddNewPoint(new double[]{10, 3, 45, 2});
             HyperRegion regB = gdv.AddNewPoint(new double[]{10, 50, 45, 50});
             HyperRegion regC = gdv.AddNewPoint(new double[]{10, 50, -45, -1});
@@ -150,7 +150,7 @@ namespace Tests
         [Test]
         public void BasicVoronoiAddFour()
         {
-            VoronoiDelunayDiagram gdv = new VoronoiDelunayDiagram(4);
+            VoronoiDelunayGraph gdv = new VoronoiDelunayGraph(4);
             HyperRegion reg = gdv.AddNewPoint(new double[]{10, 3, 45, 2});
             HyperRegion regB = gdv.AddNewPoint(new double[]{10, 50, 45, 50});
             HyperRegion regC = gdv.AddNewPoint(new double[]{10, 50, -45, -1});
@@ -182,7 +182,7 @@ namespace Tests
         [Test]
         public void BasicVoronoiAddFour_BasicFunctionality()
         {
-            VoronoiDelunayDiagram gdv = new VoronoiDelunayDiagram(4);
+            VoronoiDelunayGraph gdv = new VoronoiDelunayGraph(4);
             HyperRegion reg = gdv.AddNewPoint(new double[]{10, 3, 45, 2});
             HyperRegion regB = gdv.AddNewPoint(new double[]{10, 50, 45, 50});
             HyperRegion regC = gdv.AddNewPoint(new double[]{10, 50, -45, -1});
@@ -198,9 +198,9 @@ namespace Tests
         }
 
         [Test]
-        public VoronoiDelunayDiagram BuildOneSimplice_2D()
+        public void BuildOneSimplice_2D()
         {
-            VoronoiDelunayDiagram gdv = new VoronoiDelunayDiagram(2);
+            VoronoiDelunayGraph gdv = new VoronoiDelunayGraph(2);
             HyperRegion reg = gdv.AddNewPoint("Cordoba", new double[]{20, 5});
             HyperRegion regB = gdv.AddNewPoint("Huelva", new double[]{1, 1});
             HyperRegion regC = gdv.AddNewPoint("Cadiz", new double[]{40, 1});
@@ -217,14 +217,18 @@ namespace Tests
             Assert.IsTrue(gdv.Simplices.Single().Nucleis.Intersect(gdv.Nucleis).Count()==3);
 
             Assert.IsTrue(gdv.Nucleis.All(n => n.NucleiSimplices.Contains(gdv.Simplices.Single())));
-
-            return gdv;
         }
 
         [Test]
         public void BuildOneSimplice_AndCheckVoronoiFeatures_2D()
         {
-            VoronoiDelunayDiagram gdv = BuildOneSimplice_2D();
+            VoronoiDelunayGraph gdv = new VoronoiDelunayGraph(2);
+            HyperRegion reg = gdv.AddNewPoint("Cordoba", new double[] { 20, 5 });
+            HyperRegion regB = gdv.AddNewPoint("Huelva", new double[] { 1, 1 });
+            HyperRegion regC = gdv.AddNewPoint("Cadiz", new double[] { 40, 1 });
+
+            double[] testingPoint = new double[] { 4, 4 };
+
             Assert.IsTrue(gdv.VoronoiVertexes.Count() == 1);
             Assert.IsTrue(gdv.VoronoiRegions.All(r=>r.VoronoiVertexes.Count()==1));
         }
@@ -232,7 +236,7 @@ namespace Tests
         [Test]
         public void BuildAndRefactorOneSimpliceInTwoSimplices_2D()
         {
-            VoronoiDelunayDiagram gdv = new VoronoiDelunayDiagram(2);
+            VoronoiDelunayGraph gdv = new VoronoiDelunayGraph(2);
             HyperRegion reg = gdv.AddNewPoint("Cordoba", new double[] { 20, 5 });
             HyperRegion regB = gdv.AddNewPoint("Huelva", new double[] { 1, 1 });
             HyperRegion regC = gdv.AddNewPoint("Cadiz", new double[] { 40, 1 });
@@ -251,7 +255,7 @@ namespace Tests
         [Test]
         public void BuildAndRefactorTwoSimpliceInTwoSimplices_2D()
         {
-            VoronoiDelunayDiagram gdv = new VoronoiDelunayDiagram(2);
+            VoronoiDelunayGraph gdv = new VoronoiDelunayGraph(2);
             HyperRegion cordoba = gdv.AddNewPoint("Cordoba", new double[] { 20, 5 });
             HyperRegion huelva = gdv.AddNewPoint("Huelva", new double[] { 1, 1 });
             HyperRegion cadiz = gdv.AddNewPoint("Cadiz", new double[] { 5, -13 });

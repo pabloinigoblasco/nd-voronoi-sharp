@@ -41,6 +41,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="Facet.cs" />
     <Compile Include="HyperPlaneConstraint.cs" />
     <Compile Include="Nuclei.cs" />
     <Compile Include="Simplice.cs" />

@@ -23,7 +23,7 @@ using System.Diagnostics;
 
 namespace ndvoronoisharp
 {
-    public class VoronoiDelunayDiagram
+    public class VoronoiDelunayGraph
     {
         public readonly int dimensions;
         public IEnumerable<HyperRegion> VoronoiRegions
@@ -55,7 +55,7 @@ namespace ndvoronoisharp
         }
 
         private List<HyperRegion> regions;
-        public VoronoiDelunayDiagram(int dimensions)
+        public VoronoiDelunayGraph(int dimensions)
         {
             this.dimensions = dimensions;
             regions = new List<HyperRegion>();
@@ -102,12 +102,16 @@ namespace ndvoronoisharp
                 //that contains the new point
                 //this simplicitis are selected, and latter will be removed since
                 //their tesellation will be refactored
-                var affectedSimplicies = containerRegion.NeighbourgRegions
+                List<Simplice> affectedSimplicies = containerRegion.NeighbourgRegions
                                         .Union(new HyperRegion[] { containerRegion })
                                                 .Select(r => r.Nuclei.simplices as IEnumerable<Simplice>)
                                                 .Aggregate((acc, simps) => acc.Union(simps))
                                                 .Distinct()
-                                                .Where(s => s.CheckIsInsideHyperSphere(newPoint));
+                                                .Where(s => s.CheckIsInsideHyperSphere(newPoint))
+                                                .ToList();
+
+              
+
                 //standard case
                 if (affectedSimplicies.Any())
                 {
@@ -116,11 +120,11 @@ namespace ndvoronoisharp
                     //to a simplice that match in his hyperSphere the new point.
                     Nuclei[] PointsToRemake = affectedSimplicies.Select(s => s.Nucleis as IEnumerable<Nuclei>)
                                                          .Aggregate((acc, nucs) => acc.Union(nucs))
-                                                         .Distinct()
                                                          .Union(new Nuclei[] { newRegion.Nuclei })
+                                                         .Distinct()
                                                          .ToArray();
 
-                    if (!TryBuildTesellation(PointsToRemake, affectedSimplicies.ToList()))
+                    if (!TryBuildTesellation(PointsToRemake, affectedSimplicies))
                     {
                         //theoretically if it's inside of a hypersphere, at least a set of points are rank==dimensions
                         //so this never should happen
@@ -145,12 +149,15 @@ namespace ndvoronoisharp
                                         .Select(r => r.Nuclei)
                                         .ToArray();
 
-                    /*IEnumerable<Simplice> affectedSimplicesBruteForce = PointsToRemake.Select(n => n.simplices as IEnumerable<Simplice>)
+                    //select all the simplices related with all nucleis of the current hyperregion
+                    affectedSimplicies = PointsToRemake
+                                                .Select(n => n.simplices as IEnumerable<Simplice>)
                                                 .Aggregate((acc, simps) => acc.Union(simps))
-                                                .Distinct();
-                     * */
+                                                .Distinct()
+                                                .ToList();
+                     
 
-                    bool achievedTesellation = TryBuildTesellation(PointsToRemake, new List<Simplice>());
+                    bool achievedTesellation = TryBuildTesellation(PointsToRemake, affectedSimplicies);
                     if (achievedTesellation)
                         Debug.Print("CASE STRANGE 1");
 
@@ -251,38 +258,39 @@ namespace ndvoronoisharp
                                             .Except(newTesellation)
                                             .ToArray();*/
 
-            //Deleting refactored nuclei neighbourg for each nuclei.
-            //Assert that we do not remove any neighbour that is connected
-            //thorugh another simplice that won't be removed
-            if (oldSimplices.Any())
-            {
-                foreach (Simplice s in oldSimplices)
-                 {
-                    foreach (Nuclei n in s.Nucleis)
-                    {
-                        n.simplices.Remove(s);
-                        //remove neighbour not contained in other neighbourgs
-                        var neighToRemove=s.Nucleis
-                                          .Where(nuc=>  nuc!=n &&
-                                                        !n.simplices
-                                                        .Any(sim=>sim.Nucleis.Contains(nuc)));
-
-                        foreach(var neighRm in neighToRemove)
-                            n.nucleiNeigbourgs.Remove(neighRm);
-
-                    }
-                }
-            }
+           
                 
             foreach (Simplice s in newTesellation)
                 foreach (Nuclei n in s.Nucleis)
                 {
+
+                    //Deleting refactored nuclei neighbourg for each nuclei.
+                    //Assert that we do not remove any neighbour that is connected
+                    //thorugh another simplice that won't be removed
+                    foreach (var os in oldSimplices.Where(x=>x.Nucleis.Contains(n)))
+                    {
+                        n.simplices.Remove(os);
+                        //remove neighbour not contained in other neighbourgs
+                        var neighToRemove = os.Nucleis
+                                          .Where(nuc => nuc != n &&
+                                                        !n.simplices
+                                                        .Any(sim => sim.Nucleis.Contains(nuc)));
+
+                        foreach (var neighRm in neighToRemove)
+                            n.nucleiNeigbourgs.Remove(neighRm);
+                    }
+
+                    if (n.simplices.Contains(s))
+                        throw new Exception();
+
                     n.simplices.Add(s);
                     foreach (Nuclei newNeigbourg in s.Nucleis)
                         if (newNeigbourg != n && !n.nucleiNeigbourgs.Contains(newNeigbourg))
                             n.nucleiNeigbourgs.Add(newNeigbourg);
                         
                 }
+
+            
             
 
         }
