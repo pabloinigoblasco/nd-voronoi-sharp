@@ -31,20 +31,20 @@ namespace Tests
 		[Test()]
 		public void ConstraintAndSinglePoints ()
 		{
-			HyperPlaneConstraint c=new DefaultConstraint(new double[]{0,0,-1},new double[]{0,0,1});
+			IVoronoiFacet c=new DefaultVoronoiFacet(new double[]{0,0,-1},new double[]{0,0,1});
 			
             //plane z=0
 			Assert.IsFalse(c.semiHyperSpaceMatch(new double[]{0.4,0.4,0.4}));
 			Assert.IsTrue(c.semiHyperSpaceMatch(new double[]{-0.5,-0.5,-0.5}));
 			Assert.IsFalse(c.semiHyperSpaceMatch(new double[]{1,1,2}));
 
-            c = new InverseConstraintDecorator(c);
+            c = new InverseDefaultVoronoiFacet(c);
 
             Assert.IsTrue(c.semiHyperSpaceMatch(new double[] { 0.4, 0.4, 0.4 }));
             Assert.IsFalse(c.semiHyperSpaceMatch(new double[] { -0.5, -0.5, -0.5 }));
             Assert.IsTrue(c.semiHyperSpaceMatch(new double[] { 1, 1, 2 }));
 
-            c = new DefaultConstraint(new double[] { 10, 0, 10 }, new double[] { 20, 0, 15 });
+            c = new DefaultVoronoiFacet(new double[] { 10, 0, 10 }, new double[] { 20, 0, 15 });
             Assert.IsTrue(c.semiHyperSpaceMatch(new double[] { 1, 1, 1 }));
             Assert.IsFalse(c.semiHyperSpaceMatch(new double[]{50,40,20}));
 		}
@@ -212,11 +212,11 @@ namespace Tests
             Assert.IsFalse(regC.ContainsPoint(testingPoint));
             Assert.AreEqual(gdv.GetMatchingRegion(testingPoint), regB);
 
-            Assert.IsTrue(gdv.Nucleis.All(n=>n.ConvexBoundary));
+            Assert.IsTrue(gdv.Nucleis.All(n=>n.BelongConvexHull));
             Assert.IsTrue(gdv.Simplices.Count() == 1);
             Assert.IsTrue(gdv.Simplices.Single().Nucleis.Intersect(gdv.Nucleis).Count()==3);
 
-            Assert.IsTrue(gdv.Nucleis.All(n => n.NucleiSimplices.Contains(gdv.Simplices.Single())));
+            Assert.IsTrue(gdv.Nucleis.All(n => n.Simplices.Contains(gdv.Simplices.Single())));
         }
 
         [Test]
@@ -246,10 +246,10 @@ namespace Tests
             Assert.IsTrue(gdv.Simplices.Count()==2);
             Assert.IsTrue(gdv.VoronoiVertexes.Count() == 2);
 
-            Assert.IsTrue(regD.Nuclei.NucleiSimplices.Count() == 2);
-            Assert.IsTrue(reg.Nuclei.NucleiSimplices.Count() == 2);
-            Assert.IsTrue(regB.Nuclei.NucleiSimplices.Count() == 1);
-            Assert.IsTrue(regC.Nuclei.NucleiSimplices.Count() == 1);
+            Assert.IsTrue(regD.Nuclei.Simplices.Count() == 2);
+            Assert.IsTrue(reg.Nuclei.Simplices.Count() == 2);
+            Assert.IsTrue(regB.Nuclei.Simplices.Count() == 1);
+            Assert.IsTrue(regC.Nuclei.Simplices.Count() == 1);
         }
 
         [Test]
@@ -288,10 +288,10 @@ namespace Tests
             Assert.IsFalse(cadiz.NeighbourgRegions.Contains(cordoba));
 
 
-            Assert.AreEqual(sevilla.Nuclei.NucleiSimplices.Count() , 4);
-            Assert.AreEqual(cordoba.Nuclei.NucleiSimplices.Count() , 2);
-            Assert.AreEqual(huelva.Nuclei.NucleiSimplices.Count() , 2);
-            Assert.AreEqual(malaga.Nuclei.NucleiSimplices.Count() , 2);
+            Assert.AreEqual(sevilla.Nuclei.Simplices.Count() , 4);
+            Assert.AreEqual(cordoba.Nuclei.Simplices.Count() , 2);
+            Assert.AreEqual(huelva.Nuclei.Simplices.Count() , 2);
+            Assert.AreEqual(malaga.Nuclei.Simplices.Count() , 2);
         }
 
 

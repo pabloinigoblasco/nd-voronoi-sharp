@@ -27,7 +27,7 @@ namespace ndvoronoisharp
 	/// vector of the hyperplane defines the owned semi-hyperSpace. 
 	/// It is used to define bounds between voronoi regions.
 	/// </summary>
-	public interface HyperPlaneConstraint
+	public interface IVoronoiFacet
 	{
 		/// <summary>
 		/// Checks if the point belong to the owner hyperplane
@@ -48,7 +48,7 @@ namespace ndvoronoisharp
 	/// This class represent a hyperplane that subdivides the ndimensional space in two subspaces. 
 	/// It is used to define bounds between voronoi regions.
 	/// </summary>
-	public class DefaultConstraint : HyperPlaneConstraint
+	public class DefaultVoronoiFacet : IVoronoiFacet
 	{
 		/// <summary>
 		/// Example in the plane Ax+By+Cz<D in R3, coefficents would be [A,B,C,D]
@@ -64,7 +64,7 @@ namespace ndvoronoisharp
 		/// It represents a single inequality that checks if a sample point belong to the positive or negative subspaces.
 		/// </summary>
 		/// </param>
-		public DefaultConstraint (double[] ownerPoint, double[] foreignPoint)
+		public DefaultVoronoiFacet (double[] ownerPoint, double[] foreignPoint)
 		{
             coefficents = new Vector(ownerPoint.Length + 1) ;
             coefficents[coefficents.Length - 1] = 0;
@@ -87,7 +87,7 @@ namespace ndvoronoisharp
         /// Remember that a nd constraint has a nd+1 coefficents taking into account the independent term.
         /// </remarks>
         /// <param name="coefficents"></param>
-        internal DefaultConstraint(double[] coefficents)
+        internal DefaultVoronoiFacet(double[] coefficents)
         {
             this.coefficents = new Vector(coefficents);
         }
@@ -114,15 +114,15 @@ namespace ndvoronoisharp
 		/// This decorator is useful to view a constraint from the inverse point of view in terms of regions.
 		/// It is not nice waste memmory in n-dimensional spaces.
 		/// </summary>
-		public class InverseConstraintDecorator : HyperPlaneConstraint
+		public class InverseDefaultVoronoiFacet : IVoronoiFacet
 		{
-			readonly HyperPlaneConstraint decorated;
-			public InverseConstraintDecorator (HyperPlaneConstraint constraint)
+			readonly DefaultVoronoiFacet decorated;
+			public InverseDefaultVoronoiFacet (IVoronoiFacet constraint)
 			{
-				if (constraint == null || !(constraint is DefaultConstraint))
+				if (constraint == null || !(constraint is DefaultVoronoiFacet))
 					throw new ArgumentException ("invalid constraint.");
 				
-				decorated = constraint;
+				decorated = constraint as DefaultVoronoiFacet;
 			}
 
 			public bool semiHyperSpaceMatch (double[] point)

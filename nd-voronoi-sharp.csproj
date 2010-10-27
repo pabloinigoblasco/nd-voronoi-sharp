@@ -41,17 +41,25 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
-    <Compile Include="Facet.cs" />
-    <Compile Include="HyperPlaneConstraint.cs" />
+    <Compile Include="DelunaiFacet.cs" />
+    <Compile Include="Helpers.cs" />
+    <Compile Include="IDelunaiFacet.cs" />
+    <Compile Include="INuclei.cs" />
+    <Compile Include="ISimplice.cs" />
+    <Compile Include="IVoronoiDelunayGraph.cs" />
+    <Compile Include="IVoronoiRegion.cs" />
+    <Compile Include="IVoronoiVertex.cs" />
     <Compile Include="Nuclei.cs" />
     <Compile Include="Simplice.cs" />
     <Compile Include="VoronoiDelunayDiagram.cs" />
     <Compile Include="HyperRegion.cs" />
+    <Compile Include="VoronoiFacet.cs" />
     <Compile Include="VoronoiVertex.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Plane\" />
     <Folder Include="Space\" />
+    <Folder Include="TreeImplementation\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

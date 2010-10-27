@@ -30,13 +30,13 @@ namespace ndvoronoisharp
     /// <remarks>
     /// As it is one of the most stable objects, a lot of data has been set here like lists, etc. 
     /// </remarks>
-    public class Nuclei
+    public class Nuclei : ndvoronoisharp.INuclei
     {
-        public bool ConvexBoundary { get; internal set; }
-        public HyperRegion VoronoiHyperRegion { get; private set; }
-        internal List<Nuclei> nucleiNeigbourgs { get; private set; }
-        public IEnumerable<Nuclei> NucleiNeigbourgs { get { return nucleiNeigbourgs; } }
-        public IEnumerable<Simplice> NucleiSimplices { get { return simplices; } }
+        public bool BelongConvexHull { get; internal set; }
+        public IVoronoiRegion VoronoiHyperRegion { get; private set; }
+        internal List<INuclei> nucleiNeigbourgs { get; private set; }
+        public IEnumerable<INuclei> Neighbourgs { get { return nucleiNeigbourgs; } }
+        public IEnumerable<ISimplice> Simplices { get { return simplices.Cast<ISimplice>(); } }
         public double[] Coordinates { get { return coordinates; } }
         public object Data;
 
@@ -50,7 +50,7 @@ namespace ndvoronoisharp
             this.coordinates = coordinates;
             this.VoronoiHyperRegion = thisRegion;
             this.simplices = new List<Simplice>();
-            this.nucleiNeigbourgs = new List<Nuclei>();
+            this.nucleiNeigbourgs = new List<INuclei>();
             this.Data = data;
         }
         public override string ToString()
@@ -71,22 +71,22 @@ namespace ndvoronoisharp
             }
         }
 
-        internal static bool AssertCoLinear(params Nuclei[] nucleis)
+        internal static bool AssertCoLinear(params INuclei[] nucleis)
         {
             return AssertRank(nucleis,1);
         }
 
-        internal static bool AssertRank(Nuclei[] nucleis, int desiredRank)
+        internal static bool AssertRank(INuclei[] nucleis, int desiredRank)
         {
             if (nucleis.Length < desiredRank)
                 return false;
 
-            int workingSpaceDim=nucleis.First().coordinates.Length;
+            int workingSpaceDim=nucleis.First().Coordinates.Length;
             Matrix m = new Matrix(nucleis.Length,workingSpaceDim );
             for(int i=0;i<nucleis.Length;i++)
             {
                 for(int j=0;j<workingSpaceDim;j++)
-                    m[i,j]=nucleis[i].coordinates[j];
+                    m[i,j]=nucleis[i].Coordinates[j];
             }
 
             return m.Rank()==desiredRank;

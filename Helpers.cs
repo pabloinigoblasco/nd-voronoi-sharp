@@ -18,17 +18,21 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
-namespace ndvoronoisharp
+internal static class Helpers
 {
-    public class VoronoiVertex : ndvoronoisharp.IVoronoiVertex
+    internal static IEnumerable<IEnumerable<T>> Combinations<T>(IEnumerable<T> elements, int setLenght)
     {
-        internal readonly double[] coordinates;
-        public double[] Coordinates { get { return coordinates; } }
-        internal VoronoiVertex(double[] coordinates)
+        int elementLenght = elements.Count();
+        if (setLenght == 1)
+            return elements.Select(e => Enumerable.Repeat(e, 1));
+        else if (setLenght == elementLenght)
+            return Enumerable.Repeat(elements, 1);
+        else
         {
-            this.coordinates = coordinates;
+            return Combinations(elements.Skip(1), setLenght - 1)
+                            .Select(tail => Enumerable.Repeat(elements.First(), 1).Union(tail))
+                            .Union(Combinations(elements.Skip(1), setLenght));
         }
     }
 }

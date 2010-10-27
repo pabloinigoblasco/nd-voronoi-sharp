@@ -25,19 +25,19 @@ namespace ndvoronoisharp
 	/// <summary>
 	/// This class represent a n-dimensional voronoi region
 	/// </summary>
-	public class HyperRegion
+	public class HyperRegion : ndvoronoisharp.IVoronoiRegion
 	{
 		/*Public properties*/
 
-		public Nuclei Nuclei{get; private set;}
-        public IEnumerable<SimpliceCentroid> VoronoiVertexes { get { return Nuclei.simplices.Select(s => s.VoronoiVertex); } }
-        public IEnumerable<HyperRegion> NeighbourgRegions { get { return Nuclei.NucleiNeigbourgs.Select(n => n.VoronoiHyperRegion); } }
-        public bool IsBoundingRegion { get { return this.Nuclei.ConvexBoundary; } }
+		public INuclei Nuclei{get; private set;}
+        public IEnumerable<IVoronoiVertex> VoronoiVertexes { get { return Nuclei.Simplices.Select(s => s.VoronoiVertex); } }
+        public IEnumerable<IVoronoiRegion> NeighbourgRegions { get { return Nuclei.Neighbourgs.Select(n => n.VoronoiHyperRegion); } }
+        public bool IsBoundingRegion { get { return this.Nuclei.BelongConvexHull; } }
 
         /*Internal properties*/
-        internal int ProblemDimensionality { get { return Nuclei.coordinates.Length; } }
+        internal int ProblemDimensionality { get { return Nuclei.Coordinates.Length; } }
 
-        internal Dictionary<HyperRegion, HyperPlaneConstraint> lazyConstraintsMap
+        internal Dictionary<IVoronoiRegion, IVoronoiFacet> lazyConstraintsMap
         {
             get
             {
@@ -49,15 +49,15 @@ namespace ndvoronoisharp
 
                 foreach(var newNeighbour in newNeighbourgs)
                 {
-                    HyperPlaneConstraint constraint=new DefaultConstraint(this.Nuclei.coordinates,newNeighbour.Nuclei.coordinates);
+                    DefaultVoronoiFacet constraint=new DefaultVoronoiFacet(this.Nuclei.Coordinates,newNeighbour.Nuclei.Coordinates);
                     neighboursConstraintMap.Add(newNeighbour, constraint);
-                    newNeighbour.neighboursConstraintMap.Add(this, new InverseConstraintDecorator(constraint));
+                    ((HyperRegion)newNeighbour).neighboursConstraintMap.Add(this, new InverseDefaultVoronoiFacet(constraint));
                  }
 
                 return neighboursConstraintMap;
             }
         }
-        private Dictionary<HyperRegion,HyperPlaneConstraint> neighboursConstraintMap;
+        private Dictionary<IVoronoiRegion,IVoronoiFacet> neighboursConstraintMap;
 
         /// <summary>
         /// This function checks if a point in the n-dimensional space is contained in this
@@ -86,10 +86,12 @@ namespace ndvoronoisharp
 		internal HyperRegion (double[] center, object data)
 		{
             this.Nuclei = new Nuclei(center, this,data);
-            neighboursConstraintMap = new Dictionary<HyperRegion, HyperPlaneConstraint>();
+            neighboursConstraintMap = new Dictionary<IVoronoiRegion, IVoronoiFacet>();
 		}
-		
-		
-		
-	}
+
+
+
+
+      
+    }
 }

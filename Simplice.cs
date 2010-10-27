@@ -30,80 +30,37 @@ namespace ndvoronoisharp
     /// For example. In a 2-Dimensional World, this class represent a triangle.
     /// In a 3-Dimensional World this class represent a poliedra.
     /// </summary>
-    public class Simplice
+    public class Simplice : ndvoronoisharp.ISimplice
     {
-        public Nuclei[] Nucleis { get; private set; }
-        public IEnumerable<Simplice> NeighbourSimplices 
+        public INuclei[] Nucleis { get; private set; }
+        public IEnumerable<ISimplice> NeighbourSimplices 
         {
             get 
             {
-                var a=this.Nucleis.SelectMany(p => p.NucleiSimplices).Distinct();
-                var b = a.Where(simp => simp != this); //vértices de voronoi candidatos
-                var c= b.Where(simp => simp.Nucleis.Intersect(this.Nucleis).Count()>=Dimensionality);
-
-                return c;
+                return Facets.Where(f => !f.IsBoundingFacet).Select(f => f.ParentA == this ? f.ParentB : f.ParentB).Cast<ISimplice>();
             }
         }
-
-        public IEnumerable<Facet> Facets
-        {
-            get 
-            { 
-                //combinations of ndimension+1 sets of nuclei elements
-                throw new NotImplementedException();
-
-            }
-        }
-
-
-        /// <summary>
-        /// Returns the set of nucleis that forms the infinite Neighbour área
-        /// </summary>
-        public Nuclei[] InfiniteNeighbourVoronoiVertexes
-        {
-            get 
-            {
-                if (NeighbourSimplices.Count() == Dimensionality + 1) //maxium numbers of facets
-                    return null;
-                else
-                {
-                    //can only they have one infinite Neighbour?
-
-                    //foreach nuclei pair in the Simplice nucleis
-                    //if they don't share another simplice means that they are
-                    //delunay-graph hull vertexes and then contains a infinite voronoi vertex
-
-                    List<Nuclei> notSharing=new List<Nuclei>();
-                    foreach (var n1 in Nucleis)
-                    {
-                        foreach (var n2 in n1.nucleiNeigbourgs)
-                        {
-                            if (!n1.simplices.Except(Enumerable.Repeat(this,1)).Intersect(n2.simplices).Any())
-                            {
-                                notSharing.Add(n2);
-                                notSharing.Add(n1);
-                            }
-                        }
-                    }
-                    return notSharing.Distinct().ToArray();
-                      
-                }
-            }
-        }
-
-        public int Dimensionality { get { return Nucleis.First().coordinates.Length ; } }
-
-        private SimpliceCentroid voroniVertex;
-        private double squaredDistance;
         public double Radious { get { return Math.Sqrt(squaredDistance); } }
+        public IDelunaiFacet[] Facets
+        {
+            get
+            {
+                //combinations of ndimension+1 sets of nuclei elements
+                if (facets == null)
+                    facets = Helpers.Combinations(this.Nucleis, Dimensionality).
+                                Select(nucs => new DelunaiFacet(nucs)).ToArray();
+                return facets;
+
+            }
+        }
 
         /// <summary>
         /// This method calculates the n-dimensional centroid of the hyper-sphere that bounds all his Nucleis.
         /// </summary>
         /// <returns></returns>
-        public SimpliceCentroid VoronoiVertex
+        public IVoronoiVertex VoronoiVertex
         {
-            get 
+            get
             {
                 if (voroniVertex == null)
                     CalculateSimpliceCentroid();
@@ -112,13 +69,37 @@ namespace ndvoronoisharp
             }
         }
 
+        private IDelunaiFacet[] facets;
+     
+        public int Dimensionality { get { return Nucleis.First().Coordinates.Length ; } }
+        private IVoronoiVertex voroniVertex;
+        private double squaredDistance;
+        
+
+    
+
         /// <summary>
         /// The number of nodes must be n+1 dimensional where n is the dimensions of the problem
         /// </summary>
         /// <param name="nucleis"></param>
-        public Simplice(Nuclei[] nucleis)
+        public Simplice(INuclei[] nucleis)
         {
             this.Nucleis = nucleis;
+        }
+
+        internal void RaiseRefreshNeighbours()
+        {
+            var a = this.Nucleis.SelectMany(p => p.Simplices).Distinct();
+            var b = a.Where(simp => simp != this); //vértices de voronoi candidatos
+            var neighbours = b.Where(simp => simp.Nucleis.Intersect(this.Nucleis).Count() >= Dimensionality);
+
+            foreach (Simplice neighbour in neighbours)
+                neighbour.RaiseNeighbourRefresh();
+        }
+
+        private void RaiseNeighbourRefresh()
+        {
+            this.facets = null;
         }
 
         /// <summary>
@@ -135,7 +116,7 @@ namespace ndvoronoisharp
             double sum = 0;
             for (int i = 0; i < point.Length; i++)
             {
-                double diff=point[i] - this.voroniVertex.coordinates[i];
+                double diff=point[i] - this.voroniVertex.Coordinates[i];
                 sum += (diff*diff);
             }
 
@@ -149,7 +130,7 @@ namespace ndvoronoisharp
         {
             Debug.Print("Calculating Simplice centroid");
 
-            if (Nucleis.Any(n => n.coordinates.Length != Dimensionality))
+            if (Nucleis.Any(n => n.Coordinates.Length != Dimensionality))
                 throw new ArgumentException("Incorrect dimensionality in the nucleis. some nucleis have no the right dimensionality");
 
             Matrix mA = new Matrix(Dimensionality,Dimensionality);
@@ -159,8 +140,8 @@ namespace ndvoronoisharp
                 mb[i,0]=0;
                 for(int j=0;j<Dimensionality;j++)
                 {
-                    mA[i,j] = Nucleis[0].coordinates[j] - Nucleis[i+1].coordinates[j];
-                    mb[i,0]+= mA[i,j]*((Nucleis[0].coordinates[j]+Nucleis[i+1].coordinates[j])/2.0);
+                    mA[i,j] = Nucleis[0].Coordinates[j] - Nucleis[i+1].Coordinates[j];
+                    mb[i,0]+= mA[i,j]*((Nucleis[0].Coordinates[j]+Nucleis[i+1].Coordinates[j])/2.0);
                 }
 
             }
@@ -168,7 +149,7 @@ namespace ndvoronoisharp
             Matrix result = mA.Solve(mb);
             squaredDistance = 0;
             double[] dataResult=result.GetColumnVector(0).ToArray();
-            voroniVertex = new SimpliceCentroid(dataResult);
+            voroniVertex = new VoronoiVertex(dataResult);
             for (int i = 0; i < dataResult.Length; i++)
             {
                 double diff=dataResult[i]-Nucleis.First().Coordinates[i];
@@ -181,5 +162,7 @@ namespace ndvoronoisharp
         {
             return GetHashCode()+"||"+string.Join(", ", Nucleis.Select(nc => nc.ToString()).ToArray());
         }
+
+
     }
 }

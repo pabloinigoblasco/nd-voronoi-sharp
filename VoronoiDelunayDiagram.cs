@@ -23,42 +23,42 @@ using System.Diagnostics;
 
 namespace ndvoronoisharp
 {
-    public class VoronoiDelunayGraph
+    public class VoronoiDelunayGraph : IVoronoiDelunayGraph
     {
         public readonly int dimensions;
-        public IEnumerable<HyperRegion> VoronoiRegions
+        public IEnumerable<IVoronoiRegion> VoronoiRegions
         {
             get { return regions; }
         }
 
-        public IEnumerable<Nuclei> Nucleis
+        public IEnumerable<INuclei> Nucleis
         {
             get { return regions.Select(r => r.Nuclei); }
         }
 
-        public IEnumerable<SimpliceCentroid> VoronoiVertexes
+        public IEnumerable<IVoronoiVertex> VoronoiVertexes
         {
             get { return Simplices.Select(simp => simp.VoronoiVertex); }
         }
 
-        public IEnumerable<Simplice> Simplices
+        public IEnumerable<ISimplice> Simplices
         {
             get
             {
                 if (Nucleis.Any())
-                    return Nucleis.Select(n => n.simplices as IEnumerable<Simplice>)
+                    return Nucleis.Select(n => n.Simplices as IEnumerable<ISimplice>)
                                   .Aggregate((acc, simps) => acc.Union(simps))
                                   .Distinct();
                 else
-                    return Enumerable.Empty<Simplice>();
+                    return Enumerable.Empty<ISimplice>();
             }
         }
 
-        private List<HyperRegion> regions;
+        private List<IVoronoiRegion> regions;
         public VoronoiDelunayGraph(int dimensions)
         {
             this.dimensions = dimensions;
-            regions = new List<HyperRegion>();
+            regions = new List<IVoronoiRegion>();
         }
 
 
@@ -84,14 +84,14 @@ namespace ndvoronoisharp
             if (newPoint == null || newPoint.Length != dimensions)
                 throw new ArgumentException("point added null or has invalid dimensionality");
 
-            HyperRegion containerRegion = this.GetMatchingRegion(newPoint);
+            HyperRegion containerRegion = (HyperRegion)this.GetMatchingRegion(newPoint);
             HyperRegion newRegion = new HyperRegion(newPoint, data);
             this.regions.Add(newRegion);
 
             //the very first one region
             if (containerRegion == null)
             {
-                newRegion.Nuclei.ConvexBoundary = true;
+                ((Nuclei)newRegion.Nuclei).BelongConvexHull = true;
             }
             //the standard case
             else
@@ -102,15 +102,14 @@ namespace ndvoronoisharp
                 //that contains the new point
                 //this simplicitis are selected, and latter will be removed since
                 //their tesellation will be refactored
-                List<Simplice> affectedSimplicies = containerRegion.NeighbourgRegions
-                                        .Union(new HyperRegion[] { containerRegion })
-                                                .Select(r => r.Nuclei.simplices as IEnumerable<Simplice>)
-                                                .Aggregate((acc, simps) => acc.Union(simps))
+                List<ISimplice> affectedSimplicies = containerRegion.NeighbourgRegions
+                                        .Union(new IVoronoiRegion[] { containerRegion })
+                                                .SelectMany(r => r.Nuclei.Simplices as IEnumerable<ISimplice>)
                                                 .Distinct()
-                                                .Where(s => s.CheckIsInsideHyperSphere(newPoint))
+                                                .Where(s => ((Simplice)s).CheckIsInsideHyperSphere(newPoint))
                                                 .ToList();
 
-              
+
 
                 //standard case
                 if (affectedSimplicies.Any())
@@ -118,9 +117,9 @@ namespace ndvoronoisharp
 
                     //we have to regenerate a chunk of the delunai map. All the points to remake belongs
                     //to a simplice that match in his hyperSphere the new point.
-                    Nuclei[] PointsToRemake = affectedSimplicies.Select(s => s.Nucleis as IEnumerable<Nuclei>)
+                    INuclei[] PointsToRemake = affectedSimplicies.Select(s => s.Nucleis as IEnumerable<INuclei>)
                                                          .Aggregate((acc, nucs) => acc.Union(nucs))
-                                                         .Union(new Nuclei[] { newRegion.Nuclei })
+                                                         .Union(new INuclei[] { newRegion.Nuclei })
                                                          .Distinct()
                                                          .ToArray();
 
@@ -144,24 +143,38 @@ namespace ndvoronoisharp
                 {
                     //CASE 1 - External point
                     //Then try to build a tesellation with bruteForce. This point, is owner region and all his the neighbourg.
-                    Nuclei[] PointsToRemake = containerRegion.NeighbourgRegions
-                                        .Union(new HyperRegion[] { containerRegion,newRegion })
-                                        .Select(r => r.Nuclei)
-                                        .ToArray();
+                    /*var affectedPoints = containerRegion.NeighbourgRegions
+                                        .Union(new HyperRegion[] { containerRegion, newRegion })
+                                        .Select(r => r.Nuclei);*/
 
-                    //select all the simplices related with all nucleis of the current hyperregion
-                    affectedSimplicies = PointsToRemake
-                                                .Select(n => n.simplices as IEnumerable<Simplice>)
-                                                .Aggregate((acc, simps) => acc.Union(simps))
-                                                .Distinct()
-                                                .ToList();
-                     
+                    var affectedPoints=this.Simplices.SelectMany(s => s.Facets.Where(f => f.IsBoundingFacet))
+                                        .SelectMany(f => f.Vertexes)
+                                        .Union(containerRegion.NeighbourgRegions.Select(neigh=>neigh.Nuclei))
+                                        .Union(new INuclei[]{containerRegion.Nuclei, newRegion.Nuclei})
+                                        .Distinct();
 
-                    bool achievedTesellation = TryBuildTesellation(PointsToRemake, affectedSimplicies);
+                    
+
+                    INuclei[] pointsToRemake;
+
+            
+                        //select all the simplices related with all nucleis of the current hyperregion
+                        affectedSimplicies = affectedPoints
+                                                    .Select(n => n.Simplices as IEnumerable<ISimplice>)
+                                                    .Aggregate((acc, simps) => acc.Union(simps))
+                                                    .Distinct()
+                                                    .ToList();
+                        pointsToRemake = affectedSimplicies.SelectMany(s => s.Nucleis)
+                                                .Union(affectedPoints).Distinct().ToArray();
+              
+
+
+
+                    bool achievedTesellation = TryBuildTesellation(pointsToRemake, affectedSimplicies);
                     if (achievedTesellation)
                         Debug.Print("CASE STRANGE 1");
 
-                    //THEN CASE 2 - Beginigs and noth enough to build a simplice
+                //THEN CASE 2 - Beginigs and noth enough to build a simplice
                     else
                     {
                         Debug.Print("CASE STRANGE 2");
@@ -170,19 +183,19 @@ namespace ndvoronoisharp
 
                         Debug.Print("We don't like this region. Maybe super-computer requirements?");
 
-                        foreach (var n in containerRegion.NeighbourgRegions.Select(r=>r.Nuclei))
+                        foreach (var n in containerRegion.NeighbourgRegions.Select(r => r.Nuclei))
                         {
-                            if (!Nuclei.AssertCoLinear(new Nuclei[] { n, newRegion.Nuclei, containerRegion.Nuclei }))
+                            if (!Nuclei.AssertCoLinear(new INuclei[] { n, newRegion.Nuclei, containerRegion.Nuclei }))
                             {
-                                newRegion.Nuclei.nucleiNeigbourgs.Add(n);
-                                n.nucleiNeigbourgs.Add(newRegion.Nuclei);
+                                ((Nuclei)newRegion.Nuclei).nucleiNeigbourgs.Add(n);
+                                ((Nuclei)n).nucleiNeigbourgs.Add(newRegion.Nuclei);
                             }
                         }
 
                         //of course the new point is neigbhour of the region where it fell
-                        containerRegion.Nuclei.nucleiNeigbourgs.Add(newRegion.Nuclei);
-                        newRegion.Nuclei.nucleiNeigbourgs.Add(containerRegion.Nuclei);
-                        newRegion.Nuclei.ConvexBoundary = true;
+                        ((Nuclei)containerRegion.Nuclei).nucleiNeigbourgs.Add(newRegion.Nuclei);
+                        ((Nuclei)newRegion.Nuclei).nucleiNeigbourgs.Add(containerRegion.Nuclei);
+                        ((Nuclei)newRegion.Nuclei).BelongConvexHull = true;
                     }
 
                 }
@@ -194,23 +207,37 @@ namespace ndvoronoisharp
         /// This function checks all requirements to build a tessellation, basically the number of independent nodes.
         /// If they are enough this method call to the buildTesellation method.
         /// </summary>        
-        private bool TryBuildTesellation(Nuclei[] PointsToRemake, List<Simplice> oldSimplices)
+        private bool TryBuildTesellation(INuclei[] PointsToRemake, List<ISimplice> oldSimplices)
         {
             //check enough points
             if (PointsToRemake.Length >= dimensions + 1)
             {
                 //Candidate simplices will contain some old simplices
                 //and some new maked up simplices
-                List<Simplice> candidateSimplices = new List<Simplice>();
+                IEnumerable<IEnumerable<INuclei>> candidateSimplicesNucleis = Helpers.Combinations(PointsToRemake, dimensions + 1);
 
                 //the only thing we need is a combinatory function about the exploited points
-                generateCombinatorySimplicies(0,0, dimensions + 1, PointsToRemake, null, oldSimplices, candidateSimplices);
-                candidateSimplices.RemoveAll(s => !Nuclei.AssertRank(s.Nucleis, dimensions));
+                //generateCombinatorySimplicies(0,0, dimensions + 1, PointsToRemake, null, oldSimplices, candidateSimplices);
+
+                List<ISimplice> candidateSimplices = new List<ISimplice>();
+
+                foreach (var nucSet in candidateSimplicesNucleis)
+                {
+                    ISimplice existingSimplice = oldSimplices.FirstOrDefault(s => nucSet.All(n => s.Nucleis.Contains(n)));
+                    if (existingSimplice != null)
+                        candidateSimplices.Add(existingSimplice);
+                    else
+                    {
+                        INuclei[] nucs = nucSet.ToArray();
+                        if (Nuclei.AssertRank(nucs, dimensions))
+                            candidateSimplices.Add(new Simplice(nucs));
+                    }
+                }
 
                 //check enough independent points
                 if (candidateSimplices.Any())
                 {
-                    BuildTesellationAndSetNeiborghood(candidateSimplices, PointsToRemake,oldSimplices);
+                    BuildTesellationAndSetNeiborghood(candidateSimplices, PointsToRemake, oldSimplices);
                     return true;
                 }
                 else
@@ -220,7 +247,7 @@ namespace ndvoronoisharp
                 return false; //not enough points to build a teselation in this n-dimensional world
 
         }
-        private void BuildTesellationAndSetNeiborghood(List<Simplice> candidateSimplices,Nuclei[] pointsToRemake,List<Simplice> oldSimplices)
+        private void BuildTesellationAndSetNeiborghood(List<ISimplice> candidateSimplices, INuclei[] pointsToRemake, List<ISimplice> oldSimplices)
         {
             List<Simplice> newTesellation = new List<Simplice>();
             foreach (Simplice s in candidateSimplices)
@@ -228,7 +255,7 @@ namespace ndvoronoisharp
                 bool hyperSphereCoversPoint = false;
                 foreach (var p in pointsToRemake.Except(s.Nucleis))
                 {
-                    if (s.CheckIsInsideHyperSphere(p.coordinates))
+                    if (s.CheckIsInsideHyperSphere(p.Coordinates))
                     {
                         hyperSphereCoversPoint = true;
                         break;
@@ -258,16 +285,17 @@ namespace ndvoronoisharp
                                             .Except(newTesellation)
                                             .ToArray();*/
 
-           
-                
+
+
             foreach (Simplice s in newTesellation)
+            {
                 foreach (Nuclei n in s.Nucleis)
                 {
 
                     //Deleting refactored nuclei neighbourg for each nuclei.
                     //Assert that we do not remove any neighbour that is connected
                     //thorugh another simplice that won't be removed
-                    foreach (var os in oldSimplices.Where(x=>x.Nucleis.Contains(n)))
+                    foreach (Simplice os in oldSimplices.Where(x => x.Nucleis.Contains(n)))
                     {
                         n.simplices.Remove(os);
                         //remove neighbour not contained in other neighbourgs
@@ -286,16 +314,20 @@ namespace ndvoronoisharp
                     n.simplices.Add(s);
                     foreach (Nuclei newNeigbourg in s.Nucleis)
                         if (newNeigbourg != n && !n.nucleiNeigbourgs.Contains(newNeigbourg))
+                        {
                             n.nucleiNeigbourgs.Add(newNeigbourg);
-                        
+                        }
                 }
+                s.RaiseRefreshNeighbours();
+            }
 
-            
-            
-
+            foreach (Simplice s in oldSimplices)
+            {
+                s.RaiseRefreshNeighbours();
+            }
         }
 
-        private void generateCombinatorySimplicies(int auxStartIndex, int workingIndex, int combinationSize, Nuclei[] originalBag, Nuclei[] CurrentNucleiCombination, IEnumerable<Simplice> containersSimplices, List<Simplice> resultingSimplices)
+        /*private void generateCombinatorySimplicies(int auxStartIndex, int workingIndex, int combinationSize, Nuclei[] originalBag, Nuclei[] CurrentNucleiCombination, IEnumerable<Simplice> containersSimplices, List<Simplice> resultingSimplices)
         {
 
             //first time
@@ -330,7 +362,7 @@ namespace ndvoronoisharp
                     //creating a very new simplice
                     resultingSimplices.Add(new Simplice(CurrentNucleiCombination.ToArray()));
             }
-        }
+        }*/
 
 
         /// <summary>
@@ -344,7 +376,7 @@ namespace ndvoronoisharp
         /// Region that contains point.
         /// A <see cref="Region"/>
         /// </returns>
-        public HyperRegion GetMatchingRegion(double[] point)
+        public IVoronoiRegion GetMatchingRegion(double[] point)
         {
             if (point == null || point.Length != dimensions)
             {
@@ -363,7 +395,7 @@ namespace ndvoronoisharp
             else
             {
                 /*candidate region */
-                HyperRegion r = regions.First();
+                HyperRegion r = (HyperRegion)regions.First();
 
                 bool matchAllConstraints = false;
                 while (!matchAllConstraints)
@@ -376,7 +408,7 @@ namespace ndvoronoisharp
 
                         if (!constraint.semiHyperSpaceMatch(point))
                         {
-                            r = foreingRegion;
+                            r = (HyperRegion)foreingRegion;
                             matchAllConstraints = false;
                             break;
                         }

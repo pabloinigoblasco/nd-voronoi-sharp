@@ -18,6 +18,7 @@ namespace Voronoi2DTestingWindow
         private CheckBox viewCircumpheres;
         private CheckBox viewDelunay;
         private CheckBox viewVoronoi;
+        private CheckBox cb_showNucleiInfo;
 
         VoronoiDelunayGraph voronoi;
         public MainClass()
@@ -72,17 +73,19 @@ namespace Voronoi2DTestingWindow
             {
                 PointF npos = new PointF((float)n.Coordinates[0], (float)n.Coordinates[1]); ;
                 e.Graphics.DrawEllipse(Pens.Black, new RectangleF((float)n.Coordinates[0] - 1, (float)n.Coordinates[1] - 1, 3, 3));
-                e.Graphics.DrawString("neigh:" + n.NucleiNeigbourgs.Count().ToString()
-                                      + "\nsimps:" + n.NucleiSimplices.Count(), f, Brushes.Black, npos);
+                if (cb_showNucleiInfo.Checked)
+                {
+                    e.Graphics.DrawString("neigh:" + n.Neighbourgs.Count().ToString()
+                                          + "\nsimps:" + n.Simplices.Count(), f, Brushes.Black, npos);
+                }
 
                 if (viewDelunay.Checked)
-                    foreach (Nuclei neighbour in n.NucleiNeigbourgs)
+                    foreach (Nuclei neighbour in n.Neighbourgs)
                     {
                         PointF pos = new PointF((float)neighbour.Coordinates[0], (float)neighbour.Coordinates[1]);
                         e.Graphics.DrawLine(Pens.Red, pos, npos);
                     }
             }
-
 
             foreach (Simplice s in voronoi.Simplices)
             {
@@ -98,9 +101,9 @@ namespace Voronoi2DTestingWindow
                         e.Graphics.DrawLine(Pens.Gray, s2.VoronoiVertex.ToPoint(), s.VoronoiVertex.ToPoint());
                     }
 
-                if (s.InfiniteNeighbourVoronoiVertexes != null)
+                if (s.Facets.Any())
                 {
-                    e.Graphics.FillEllipse(Brushes.HotPink, new RectangleF(npos.X - 2, npos.Y - 2, 5, 5));
+                    /*e.Graphics.FillEllipse(Brushes.HotPink, new RectangleF(npos.X - 2, npos.Y - 2, 5, 5));
 
                     //pseudoInfiniteRadiousForPainting
                     float paintRadious = (float)Math.Sqrt(this.Width * this.Width + this.Height * this.Height);
@@ -110,8 +113,8 @@ namespace Voronoi2DTestingWindow
 
                     PointF middlePoint = new PointF
                         {
-                            X = (float)(points[0].Coordinates[0] + points[0].Coordinates[0]) / 2.0f,
-                            Y = (float)(points[0].Coordinates[1] + points[0].Coordinates[1]) / 2.0f
+                            X = (float)(points[0].Coordinates[0] + points[1].Coordinates[0]) / 2.0f,
+                            Y = (float)(points[0].Coordinates[1] + points[1].Coordinates[1]) / 2.0f
                         };
 
                     PointF directionVector = new PointF
@@ -126,9 +129,10 @@ namespace Voronoi2DTestingWindow
                                               X = npos.X + paintRadious * directionVector.X,
                                               Y = npos.Y + paintRadious * directionVector.Y
                                           };
-
-                    e.Graphics.DrawLine(Pens.Gray, s.VoronoiVertex.ToPoint(), infinitePoint);
-
+                    */
+                    foreach(IDelunaiFacet facet in s.Facets)
+                        if(facet.IsBoundingFacet)
+                            e.Graphics.DrawLine(Pens.Lime, facet.Vertexes[0].Coordinates.ToPoint2F(), facet.Vertexes[1].Coordinates.ToPoint2F());
 
                 }
 
@@ -138,7 +142,7 @@ namespace Voronoi2DTestingWindow
             {
                 if (voronoi.Simplices.Any())
                 {
-                    Simplice s = voronoi.Simplices.ElementAt(step);
+                    ISimplice s = voronoi.Simplices.ElementAt(step);
                     PointF npos = new PointF((float)s.VoronoiVertex.Coordinates[0], (float)s.VoronoiVertex.Coordinates[1]); ;
                     float radious = (float)s.Radious;
 
@@ -169,13 +173,12 @@ namespace Voronoi2DTestingWindow
             this.viewCircumpheres = new System.Windows.Forms.CheckBox();
             this.viewDelunay = new System.Windows.Forms.CheckBox();
             this.viewVoronoi = new System.Windows.Forms.CheckBox();
+            this.cb_showNucleiInfo = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // viewCircumpheres
             // 
             this.viewCircumpheres.AutoSize = true;
-            this.viewCircumpheres.Checked = true;
-            this.viewCircumpheres.CheckState = System.Windows.Forms.CheckState.Checked;
             this.viewCircumpheres.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.viewCircumpheres.Location = new System.Drawing.Point(0, 245);
             this.viewCircumpheres.Name = "viewCircumpheres";
@@ -213,9 +216,21 @@ namespace Voronoi2DTestingWindow
             this.viewVoronoi.UseVisualStyleBackColor = true;
             this.viewVoronoi.CheckedChanged += new System.EventHandler(this.viewVoronoi_CheckedChanged);
             // 
+            // cb_showNucleiInfo
+            // 
+            this.cb_showNucleiInfo.AutoSize = true;
+            this.cb_showNucleiInfo.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.cb_showNucleiInfo.Location = new System.Drawing.Point(0, 194);
+            this.cb_showNucleiInfo.Name = "cb_showNucleiInfo";
+            this.cb_showNucleiInfo.Size = new System.Drawing.Size(284, 17);
+            this.cb_showNucleiInfo.TabIndex = 3;
+            this.cb_showNucleiInfo.Text = "view nucleiInfo";
+            this.cb_showNucleiInfo.UseVisualStyleBackColor = true;
+            // 
             // MainClass
             // 
             this.ClientSize = new System.Drawing.Size(284, 262);
+            this.Controls.Add(this.cb_showNucleiInfo);
             this.Controls.Add(this.viewVoronoi);
             this.Controls.Add(this.viewDelunay);
             this.Controls.Add(this.viewCircumpheres);
@@ -249,9 +264,13 @@ namespace Voronoi2DTestingWindow
 
     public static class extensions
     {
-        public static PointF ToPoint(this SimpliceCentroid a)
+        public static PointF ToPoint(this IVoronoiVertex a)
         {
             return new PointF((float)a.Coordinates.ElementAt(0), (float)a.Coordinates.ElementAt(1));
+        }
+        public static PointF ToPoint2F(this double[] coordinatees)
+        {
+            return new PointF((float)coordinatees[0], (float)coordinatees[1]);
         }
     }
 }
