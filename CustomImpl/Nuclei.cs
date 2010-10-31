@@ -21,7 +21,7 @@ using System.Linq;
 using System.Text;
 using MathNet.Numerics.LinearAlgebra;
 
-namespace ndvoronoisharp
+namespace ndvoronoisharp.CustomImp
 {
     /// <summary>
     /// This is a nuclei in the voronoi Map. They are the center of the Voronoi Regions and the nodes

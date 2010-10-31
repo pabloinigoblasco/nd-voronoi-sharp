@@ -18,6 +18,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ndvoronoisharp;
+using MathNet.Numerics.LinearAlgebra;
 
 internal static class Helpers
 {
@@ -34,5 +36,29 @@ internal static class Helpers
                             .Select(tail => Enumerable.Repeat(elements.First(), 1).Union(tail))
                             .Union(Combinations(elements.Skip(1), setLenght));
         }
+    }
+
+    /// <summary>
+    /// This is a lazy calculation of the voronoi Vertex, its not calculated if it isn't required.
+    /// </summary>
+    internal static void CalculateSimpliceCentroid(INuclei[] Nucleis, IVoronoiVertex iVoronoiVertex)
+    {
+        int Dimensionality = Nucleis.First().Coordinates.Length;
+        Matrix mA = new Matrix(Dimensionality, Dimensionality);
+        Matrix mb = new Matrix(Dimensionality, 1);
+        for (int i = 0; i < Dimensionality; i++)
+        {
+            mb[i, 0] = 0;
+            for (int j = 0; j < Dimensionality; j++)
+            {
+                mA[i, j] = Nucleis[0].Coordinates[j] - Nucleis[i + 1].Coordinates[j];
+                mb[i, 0] += mA[i, j] * ((Nucleis[0].Coordinates[j] + Nucleis[i + 1].Coordinates[j]) / 2.0);
+            }
+
+        }
+
+        Matrix result = mA.Solve(mb);
+        for (int i = 0; i < iVoronoiVertex.Coordinates.Length; i++)
+            iVoronoiVertex.Coordinates[i] = result[0, 1];
     }
 }

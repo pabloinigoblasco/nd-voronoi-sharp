@@ -20,15 +20,30 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace ndvoronoisharp
+namespace ndvoronoisharp.CustomImp
 {
     public class VoronoiVertex : ndvoronoisharp.IVoronoiVertex
     {
         internal readonly double[] coordinates;
         public double[] Coordinates { get { return coordinates; } }
-        internal VoronoiVertex(double[] coordinates)
+        public ISimplice Simplice {get;private set;}
+        internal VoronoiVertex(int dimensionality,Simplice simp)
         {
-            this.coordinates = coordinates;
+            this.coordinates = new double[dimensionality];
+            this.Simplice = simp;
+        }
+
+        public IEnumerable<IVoronoiVertex> Neighbours
+        {
+            get { return Simplice.NeighbourSimplices.Select(s => s.VoronoiVertex); }
+        }
+
+        public bool Infinity
+        {
+            get 
+            {
+                return coordinates.Any(n => double.IsInfinity(n));
+            }
         }
     }
 }

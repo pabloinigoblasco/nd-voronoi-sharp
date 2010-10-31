@@ -18,14 +18,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ndvoronoisharp.implementations;
 using System.Diagnostics;
 
-namespace ndvoronoisharp
+namespace ndvoronoisharp.CustomImp
 {
     public class VoronoiDelunayGraph : IVoronoiDelunayGraph
     {
-        public readonly int dimensions;
+        private readonly int dimensions;
+        public int Dimensionality { get { return dimensions; } }
         public IEnumerable<IVoronoiRegion> VoronoiRegions
         {
             get { return regions; }
@@ -63,7 +63,7 @@ namespace ndvoronoisharp
 
 
 
-        public HyperRegion AddNewPoint(double[] newPoint)
+        public IVoronoiRegion AddNewPoint(double[] newPoint)
         {
             return AddNewPoint(null, newPoint);
         }
@@ -79,7 +79,7 @@ namespace ndvoronoisharp
         /// generated region that represent the set of pooints that has newPoint as the nearest neigbourgh.
         /// A <see cref="Region"/>
         /// </returns>
-        public HyperRegion AddNewPoint(object data, double[] newPoint)
+        public IVoronoiRegion AddNewPoint(object data, double[] newPoint)
         {
             if (newPoint == null || newPoint.Length != dimensions)
                 throw new ArgumentException("point added null or has invalid dimensionality");
@@ -106,7 +106,7 @@ namespace ndvoronoisharp
                                         .Union(new IVoronoiRegion[] { containerRegion })
                                                 .SelectMany(r => r.Nuclei.Simplices as IEnumerable<ISimplice>)
                                                 .Distinct()
-                                                .Where(s => ((Simplice)s).CheckIsInsideHyperSphere(newPoint))
+                                                .Where(s => ((Simplice)s).CheckIsInsideCircumSphere(newPoint))
                                                 .ToList();
 
 
@@ -255,7 +255,7 @@ namespace ndvoronoisharp
                 bool hyperSphereCoversPoint = false;
                 foreach (var p in pointsToRemake.Except(s.Nucleis))
                 {
-                    if (s.CheckIsInsideHyperSphere(p.Coordinates))
+                    if (s.CheckIsInsideCircumSphere(p.Coordinates))
                     {
                         hyperSphereCoversPoint = true;
                         break;

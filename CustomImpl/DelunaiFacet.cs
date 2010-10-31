@@ -20,7 +20,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace ndvoronoisharp
+namespace ndvoronoisharp.CustomImp
 {
     public class DelunaiFacet : ndvoronoisharp.IDelunaiFacet
     {

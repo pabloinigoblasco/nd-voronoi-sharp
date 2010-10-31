@@ -20,13 +20,13 @@ namespace Voronoi2DTestingWindow
         private CheckBox viewVoronoi;
         private CheckBox cb_showNucleiInfo;
 
-        VoronoiDelunayGraph voronoi;
+        IVoronoiDelunayGraph voronoi;
         public MainClass()
         {
             InitializeComponent();
 
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
-            voronoi = new VoronoiDelunayGraph(2);
+            voronoi = new ndvoronoisharp.CustomImp.VoronoiDelunayGraph(2);
 
             int sample_count = 0;
             Random r = new Random();
@@ -69,7 +69,7 @@ namespace Voronoi2DTestingWindow
             sb.AppendLine("Paint Stage: " + step);
             e.Graphics.DrawString(sb.ToString(), f, Brushes.Red, new Point(0, 0));
 
-            foreach (Nuclei n in voronoi.Nucleis)
+            foreach (INuclei n in voronoi.Nucleis)
             {
                 PointF npos = new PointF((float)n.Coordinates[0], (float)n.Coordinates[1]); ;
                 e.Graphics.DrawEllipse(Pens.Black, new RectangleF((float)n.Coordinates[0] - 1, (float)n.Coordinates[1] - 1, 3, 3));
@@ -80,14 +80,14 @@ namespace Voronoi2DTestingWindow
                 }
 
                 if (viewDelunay.Checked)
-                    foreach (Nuclei neighbour in n.Neighbourgs)
+                    foreach (INuclei neighbour in n.Neighbourgs)
                     {
                         PointF pos = new PointF((float)neighbour.Coordinates[0], (float)neighbour.Coordinates[1]);
                         e.Graphics.DrawLine(Pens.Red, pos, npos);
                     }
             }
 
-            foreach (Simplice s in voronoi.Simplices)
+            foreach (ISimplice s in voronoi.Simplices)
             {
                 PointF npos = new PointF((float)s.VoronoiVertex.Coordinates[0], (float)s.VoronoiVertex.Coordinates[1]); ;
                 float radious = (float)s.Radious;
@@ -96,7 +96,7 @@ namespace Voronoi2DTestingWindow
                     e.Graphics.DrawEllipse(Pens.DarkGray, new RectangleF(new PointF(npos.X - radious, npos.Y - radious), new SizeF(radious * 2, radious * 2)));
 
                 if (viewVoronoi.Checked)
-                    foreach (Simplice s2 in s.NeighbourSimplices)
+                    foreach (ISimplice s2 in s.NeighbourSimplices)
                     {
                         e.Graphics.DrawLine(Pens.Gray, s2.VoronoiVertex.ToPoint(), s.VoronoiVertex.ToPoint());
                     }
@@ -151,11 +151,11 @@ namespace Voronoi2DTestingWindow
                     e.Graphics.FillEllipse(Brushes.Lime, (float)s.VoronoiVertex.Coordinates[0] - 2, (float)s.VoronoiVertex.Coordinates[1] - 2, 5, 5);
                     e.Graphics.DrawString(s.GetHashCode().ToString(), f, Brushes.Black, s.VoronoiVertex.ToPoint());
 
-                    foreach (Simplice s2 in s.NeighbourSimplices)
+                    foreach (ISimplice s2 in s.NeighbourSimplices)
                     {
                         e.Graphics.DrawLine(Pens.Blue, s2.VoronoiVertex.ToPoint(), s.VoronoiVertex.ToPoint());
                         e.Graphics.FillEllipse(Brushes.Blue, (float)s2.VoronoiVertex.Coordinates[0] - 1, (float)s2.VoronoiVertex.Coordinates[1] - 1, 3, 3);
-                        foreach (Nuclei n in s2.Nucleis)
+                        foreach (INuclei n in s2.Nucleis)
                             e.Graphics.FillEllipse(Brushes.Yellow, new RectangleF((float)n.Coordinates[0] - 2, (float)n.Coordinates[1] - 2, 5, 5));
                     }
 

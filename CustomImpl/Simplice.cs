@@ -18,11 +18,10 @@
 using System;
 using System.Linq;
 using MathNet.Numerics.LinearAlgebra;
-using ndvoronoisharp.implementations;
 using System.Diagnostics;
 using System.Collections.Generic;
 
-namespace ndvoronoisharp
+namespace ndvoronoisharp.CustomImp
 {
     /// <summary>
     /// This class represent the minimun convex cell politope in an politope n-dimensional world.
@@ -108,7 +107,7 @@ namespace ndvoronoisharp
         /// </summary>
         /// <param name="point"></param>
         /// <returns></returns>
-        public bool CheckIsInsideHyperSphere(double[] point)
+        public bool CheckIsInsideCircumSphere(double[] point)
         {
             if (voroniVertex == null)
                 CalculateSimpliceCentroid();
@@ -133,26 +132,12 @@ namespace ndvoronoisharp
             if (Nucleis.Any(n => n.Coordinates.Length != Dimensionality))
                 throw new ArgumentException("Incorrect dimensionality in the nucleis. some nucleis have no the right dimensionality");
 
-            Matrix mA = new Matrix(Dimensionality,Dimensionality);
-            Matrix mb=new Matrix(Dimensionality,1);
-            for (int i = 0; i < Dimensionality; i++)
-            {
-                mb[i,0]=0;
-                for(int j=0;j<Dimensionality;j++)
-                {
-                    mA[i,j] = Nucleis[0].Coordinates[j] - Nucleis[i+1].Coordinates[j];
-                    mb[i,0]+= mA[i,j]*((Nucleis[0].Coordinates[j]+Nucleis[i+1].Coordinates[j])/2.0);
-                }
+            voroniVertex = new VoronoiVertex(Dimensionality,this);
+            Helpers.CalculateSimpliceCentroid(Nucleis, voroniVertex);
 
-            }
-
-            Matrix result = mA.Solve(mb);
-            squaredDistance = 0;
-            double[] dataResult=result.GetColumnVector(0).ToArray();
-            voroniVertex = new VoronoiVertex(dataResult);
-            for (int i = 0; i < dataResult.Length; i++)
+            for (int i = 0; i < VoronoiVertex.Coordinates.Length; i++)
             {
-                double diff=dataResult[i]-Nucleis.First().Coordinates[i];
+                double diff = VoronoiVertex.Coordinates[i] - Nucleis.First().Coordinates[i];
                 squaredDistance += diff * diff;
             }
             
@@ -163,6 +148,9 @@ namespace ndvoronoisharp
             return GetHashCode()+"||"+string.Join(", ", Nucleis.Select(nc => nc.ToString()).ToArray());
         }
 
-
+        public bool CircumsphereContains(double[] point)
+        {
+            return CheckIsInsideCircumSphere(point);
+        }
     }
 }

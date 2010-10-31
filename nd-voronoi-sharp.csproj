@@ -41,20 +41,26 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
-    <Compile Include="DelunaiFacet.cs" />
+    <Compile Include="Bowyer\BowyerHyperRegion.cs" />
+    <Compile Include="Bowyer\BowyerNuclei.cs" />
+    <Compile Include="Bowyer\BowyerSimplice.cs" />
+    <Compile Include="Bowyer\BowyerVoronoiDiagram.cs" />
+    <Compile Include="Bowyer\BowyerVoronoiVertex.cs" />
+    <Compile Include="CustomImpl\DelunaiFacet.cs" />
     <Compile Include="Helpers.cs" />
     <Compile Include="IDelunaiFacet.cs" />
     <Compile Include="INuclei.cs" />
     <Compile Include="ISimplice.cs" />
+    <Compile Include="IVornoiFacets.cs" />
     <Compile Include="IVoronoiDelunayGraph.cs" />
     <Compile Include="IVoronoiRegion.cs" />
     <Compile Include="IVoronoiVertex.cs" />
-    <Compile Include="Nuclei.cs" />
-    <Compile Include="Simplice.cs" />
-    <Compile Include="VoronoiDelunayDiagram.cs" />
-    <Compile Include="HyperRegion.cs" />
-    <Compile Include="VoronoiFacet.cs" />
-    <Compile Include="VoronoiVertex.cs" />
+    <Compile Include="CustomImpl\Nuclei.cs" />
+    <Compile Include="CustomImpl\Simplice.cs" />
+    <Compile Include="CustomImpl\VoronoiDelunayDiagram.cs" />
+    <Compile Include="CustomImpl\HyperRegion.cs" />
+    <Compile Include="Common\VoronoiFacet.cs" />
+    <Compile Include="CustomImpl\VoronoiVertex.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Plane\" />

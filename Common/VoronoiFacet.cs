@@ -19,28 +19,8 @@ using System;
 using System.Linq;
 using MathNet.Numerics.LinearAlgebra;
 
-namespace ndvoronoisharp
+namespace ndvoronoisharp.Common
 {
-
-	/// <summary>
-	/// This interface represent a semi-hyperSpace whose bounds are defined by a hyperplane. The normal
-	/// vector of the hyperplane defines the owned semi-hyperSpace. 
-	/// It is used to define bounds between voronoi regions.
-	/// </summary>
-	public interface IVoronoiFacet
-	{
-		/// <summary>
-		/// Checks if the point belong to the owner hyperplane
-		/// </summary>
-		bool semiHyperSpaceMatch (double[] point);
-
-		double this[int coordinate] {
-			get;
-		}
-
-		int EuclideanSpaceDimensionality { get; }
-	}
-
 	namespace implementations
 	{
 		
@@ -59,13 +39,21 @@ namespace ndvoronoisharp
 			get { return coefficents[coordinateIndex]; }
 		}
 
+        public INuclei Owner { get; private set; }
+        public INuclei External { get; private set; }
+
 		/// <summary>
 		/// Constraint is created as a bound between these two points. A line-bound in 2D case, a Plane in the 3D case and a hyperplane in ND case.
 		/// It represents a single inequality that checks if a sample point belong to the positive or negative subspaces.
 		/// </summary>
 		/// </param>
-		public DefaultVoronoiFacet (double[] ownerPoint, double[] foreignPoint)
+		public DefaultVoronoiFacet (INuclei ownerNuclei, INuclei foreignNuclei)
 		{
+            this.Owner = ownerNuclei;
+            this.External = foreignNuclei;
+            double[] ownerPoint = Owner.Coordinates;
+            double[] foreignPoint = External.Coordinates;
+
             coefficents = new Vector(ownerPoint.Length + 1) ;
             coefficents[coefficents.Length - 1] = 0;
 
@@ -75,9 +63,6 @@ namespace ndvoronoisharp
                 //calculating the independent coefficent
                 coefficents[coefficents.Length - 1] += coefficents[i] * ((foreignPoint[i] + ownerPoint[i]) / 2f);
 			}
-			
-			
-			
 		}
 
         /// <summary>
@@ -136,7 +121,18 @@ namespace ndvoronoisharp
 			public int EuclideanSpaceDimensionality {
 				get { return decorated.EuclideanSpaceDimensionality; }
 			}
-			
-		}
+
+
+            public INuclei Owner
+            {
+                get { return decorated.External; }
+            }
+
+            public INuclei External
+            {
+                get { return decorated.Owner; }
+            }
+
+        }
 	}
 }

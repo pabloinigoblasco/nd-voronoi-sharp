@@ -18,21 +18,31 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ndvoronoisharp.implementations;
+using ndvoronoisharp.CustomImp;
+using ndvoronoisharp.Common;
+using ndvoronoisharp.Common.implementations;
 
-namespace ndvoronoisharp
+namespace ndvoronoisharp.CustomImp
 {
 	/// <summary>
 	/// This class represent a n-dimensional voronoi region
 	/// </summary>
 	public class HyperRegion : ndvoronoisharp.IVoronoiRegion
 	{
-		/*Public properties*/
+        /// <summary>
+        /// constructor visibility is restricted to assert dimensionality coherence 
+        /// </summary>
+        internal HyperRegion(double[] center, object data)
+        {
+            this.Nuclei = new Nuclei(center, this, data);
+            neighboursConstraintMap = new Dictionary<IVoronoiRegion, IVoronoiFacet>();
+        }
 
+		/*Public properties*/
 		public INuclei Nuclei{get; private set;}
-        public IEnumerable<IVoronoiVertex> VoronoiVertexes { get { return Nuclei.Simplices.Select(s => s.VoronoiVertex); } }
+        public IEnumerable<IVoronoiVertex> Vertexes { get { return Nuclei.Simplices.Select(s => s.VoronoiVertex); } }
         public IEnumerable<IVoronoiRegion> NeighbourgRegions { get { return Nuclei.Neighbourgs.Select(n => n.VoronoiHyperRegion); } }
-        public bool IsBoundingRegion { get { return this.Nuclei.BelongConvexHull; } }
+        public bool IsInfiniteRegion { get { return this.Nuclei.BelongConvexHull; } }
 
         /*Internal properties*/
         internal int ProblemDimensionality { get { return Nuclei.Coordinates.Length; } }
@@ -49,7 +59,7 @@ namespace ndvoronoisharp
 
                 foreach(var newNeighbour in newNeighbourgs)
                 {
-                    DefaultVoronoiFacet constraint=new DefaultVoronoiFacet(this.Nuclei.Coordinates,newNeighbour.Nuclei.Coordinates);
+                    DefaultVoronoiFacet constraint=new DefaultVoronoiFacet(this.Nuclei,newNeighbour.Nuclei);
                     neighboursConstraintMap.Add(newNeighbour, constraint);
                     ((HyperRegion)newNeighbour).neighboursConstraintMap.Add(this, new InverseDefaultVoronoiFacet(constraint));
                  }
@@ -78,20 +88,11 @@ namespace ndvoronoisharp
             }
             return true;
         }
-		
-		
-		/// <summary>
-		/// constructor visibility is restricted to assert dimensionality coherence 
-		/// </summary>
-		internal HyperRegion (double[] center, object data)
-		{
-            this.Nuclei = new Nuclei(center, this,data);
-            neighboursConstraintMap = new Dictionary<IVoronoiRegion, IVoronoiFacet>();
-		}
 
+        public IEnumerable<IVoronoiFacet> Facets
+        {
+            get { return neighboursConstraintMap.Values.Distinct(); }
+        }
 
-
-
-      
     }
 }
