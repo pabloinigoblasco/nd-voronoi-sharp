@@ -62,10 +62,10 @@ namespace ndvoronoisharp.Bowyer
             {
                 INuclei n=new BowyerNuclei(newPoint);
                 IVoronoiRegion r = GetMatchingRegion(newPoint);
-                var candidateVertexes = r.Vertexes.Where(v => v.Simplice.CircumsphereContains(newPoint)).ToArray();
-                candidateVertexes=candidateVertexes.SelectMany(v => v.Neighbours.Where(v2 => v2.Simplice.CircumsphereContains(newPoint))).Distinct().ToArray();
+                var candidateVertexes = r.Vertexes.Where(v => v.Simplice.CircumsphereContains(newPoint));
+                candidateVertexes=candidateVertexes.Union(candidateVertexes.SelectMany(v => v.Neighbours.Where(v2 => v2.Simplice.CircumsphereContains(newPoint)))).Distinct().ToArray();
                
-                IEnumerable<INuclei> affectedNucleis = candidateVertexes.SelectMany(v => v.Simplice.Nucleis).Union(Enumerable.Repeat(n,1)).Distinct();
+                IEnumerable<INuclei> affectedNucleis = candidateVertexes.SelectMany(v => v.Simplice.Nucleis.Where(nuc=>nuc!=null)).Union(Enumerable.Repeat(n,1)).Distinct();
 
                 if (affectedNucleis.Count() > dimensionality + 1)
                 {

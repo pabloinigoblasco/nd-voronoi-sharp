@@ -26,6 +26,8 @@ namespace ndvoronoisharp.Bowyer
 {
     class BowyerHyperRegion:IVoronoiRegion
     {
+
+#warning this can got incoherent when new nucleis are added
         IEnumerable<IVoronoiFacet> voronoiFacets;
         public IEnumerable<IVoronoiFacet> Facets { 
             get 

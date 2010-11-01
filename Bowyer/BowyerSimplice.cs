@@ -62,13 +62,18 @@ namespace ndvoronoisharp.Bowyer
         {
             get 
             {
-                if (IsIncomplete)
+                if (facets == null)
                 {
-                    if (nucleis.Count(n => n != null) == nucleis.Length - 1)
-                        facets = Enumerable.Repeat(new BowyerSimpliceFacet(nucleis, this), 1).ToArray();
+                    if (IsIncomplete)
+                    {
+                        if (nucleis.Count(n => n != null) == nucleis.Length - 1)
+                            facets = Enumerable.Repeat(new BowyerSimpliceFacet(nucleis, this), 1).ToArray();
+                        else
+                            facets = new BowyerSimpliceFacet[0];
+                    }
+                    else
+                        this.facets = Helpers.Combinations(nucleis, nucleis.Length - 1).Select(nucs => new BowyerSimpliceFacet(nucs.ToArray(), this)).ToArray();
                 }
-                else
-                    this.facets = Helpers.Combinations(nucleis, nucleis.Length - 1).Select(nucs=>new BowyerSimpliceFacet(nucs.ToArray(),this)).ToArray();
 
                 return facets;
             }
