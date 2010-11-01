@@ -19,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
+using ndvoronoisharp.Common;
 
 namespace ndvoronoisharp.CustomImp
 {
@@ -147,7 +148,7 @@ namespace ndvoronoisharp.CustomImp
                                         .Union(new HyperRegion[] { containerRegion, newRegion })
                                         .Select(r => r.Nuclei);*/
 
-                    var affectedPoints=this.Simplices.SelectMany(s => s.Facets.Where(f => f.IsBoundingFacet))
+                    var affectedPoints=this.Simplices.SelectMany(s => s.Facets.Where(f => f.IsConvexHullFacet))
                                         .SelectMany(f => f.Vertexes)
                                         .Union(containerRegion.NeighbourgRegions.Select(neigh=>neigh.Nuclei))
                                         .Union(new INuclei[]{containerRegion.Nuclei, newRegion.Nuclei})

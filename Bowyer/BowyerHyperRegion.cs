@@ -27,16 +27,21 @@ namespace ndvoronoisharp.Bowyer
     class BowyerHyperRegion:IVoronoiRegion
     {
         IEnumerable<IVoronoiFacet> voronoiFacets;
-        public IEnumerable<IVoronoiFacet> Facets { get { return voronoiFacets; } }
+        public IEnumerable<IVoronoiFacet> Facets { 
+            get 
+            {
+                if(voronoiFacets==null)
+                   voronoiFacets= nuclei.Neighbourgs.Select(n => (IVoronoiFacet)(new DefaultVoronoiFacet(nuclei, n))); 
+
+                return voronoiFacets; 
+            } 
+        }
+
         public BowyerHyperRegion(BowyerNuclei nuclei)
         {
             this.nuclei = nuclei;
         }
-        public void UpdateVoronoiFacets()
-        {
-            voronoiFacets = nuclei.Neighbourgs.Select(n => (IVoronoiFacet)(new DefaultVoronoiFacet(nuclei, n)));            
-        }
-
+ 
         public bool IsInfiniteRegion
         {
             get { return Nuclei.BelongConvexHull; }

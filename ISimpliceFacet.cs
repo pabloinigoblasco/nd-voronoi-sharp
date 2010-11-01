@@ -19,11 +19,16 @@
 using System;
 namespace ndvoronoisharp
 {
-    public interface IDelunaiFacet
+    public interface ISimpliceFacet
     {
-        bool IsBoundingFacet { get; }
+        bool IsConvexHullFacet { get; }
         ISimplice ParentA { get; }
         ISimplice ParentB { get; }
         INuclei[] Vertexes { get; }
+
+        /// <summary>
+        /// Checks if the point belong to the owner hyperplane
+        /// </summary>
+        bool semiHyperSpaceMatch(double[] point);
     }
 }

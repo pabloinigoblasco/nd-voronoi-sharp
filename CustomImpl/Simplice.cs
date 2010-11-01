@@ -20,6 +20,7 @@ using System.Linq;
 using MathNet.Numerics.LinearAlgebra;
 using System.Diagnostics;
 using System.Collections.Generic;
+using ndvoronoisharp.Common;
 
 namespace ndvoronoisharp.CustomImp
 {
@@ -36,11 +37,11 @@ namespace ndvoronoisharp.CustomImp
         {
             get 
             {
-                return Facets.Where(f => !f.IsBoundingFacet).Select(f => f.ParentA == this ? f.ParentB : f.ParentB).Cast<ISimplice>();
+                return Facets.Where(f => !f.IsConvexHullFacet).Select(f => f.ParentA == this ? f.ParentB : f.ParentB).Cast<ISimplice>();
             }
         }
         public double Radious { get { return Math.Sqrt(squaredDistance); } }
-        public IDelunaiFacet[] Facets
+        public ISimpliceFacet[] Facets
         {
             get
             {
@@ -68,7 +69,7 @@ namespace ndvoronoisharp.CustomImp
             }
         }
 
-        private IDelunaiFacet[] facets;
+        private ISimpliceFacet[] facets;
      
         public int Dimensionality { get { return Nucleis.First().Coordinates.Length ; } }
         private IVoronoiVertex voroniVertex;

@@ -46,26 +46,47 @@ namespace ndvoronoisharp.Bowyer
                 //no simplices
                 //no regions
 
+                BowyerNuclei[] nucleis=new BowyerNuclei[dimensionality+1];
+                INuclei nuclei=nucleis[0]=new BowyerNuclei(newPoint);
+
                 //create a VoronoiVertex in the infinite
-                var voronoiVertex = new BowyerVoronoiVertex(dimensionality, Enumerable.Repeat(double.PositiveInfinity, dimensionality).ToArray());
-                BowyerNuclei nuclei = new BowyerNuclei(newPoint,voronoiVertex);
+                var voronoiVertex = new BowyerVoronoiVertex(dimensionality,nucleis);
+                nucleis[0].referenceVoronoiVertex = voronoiVertex;
+
                 this.voronoiVertexes.Add(voronoiVertex);
-
-
-                voronoiVertex.CreateIncompleteSimpliceFromNuclei(nuclei);
 
                 //create a not formed Simplice
                 return voronoiVertexes.First().Simplice.Nucleis.First().VoronoiHyperRegion;
             }
             else
             {
+                INuclei n=new BowyerNuclei(newPoint);
                 IVoronoiRegion r = GetMatchingRegion(newPoint);
-                var candidateVertexes = r.Vertexes.Where(v => v.Simplice.CircumsphereContains(newPoint));
-                candidateVertexes=candidateVertexes.SelectMany(v => v.Neighbours.Where(v2 => v2.Simplice.CircumsphereContains(newPoint))).Distinct();
+                var candidateVertexes = r.Vertexes.Where(v => v.Simplice.CircumsphereContains(newPoint)).ToArray();
+                candidateVertexes=candidateVertexes.SelectMany(v => v.Neighbours.Where(v2 => v2.Simplice.CircumsphereContains(newPoint))).Distinct().ToArray();
+               
+                IEnumerable<INuclei> affectedNucleis = candidateVertexes.SelectMany(v => v.Simplice.Nucleis).Union(Enumerable.Repeat(n,1)).Distinct();
 
+                if (affectedNucleis.Count() > dimensionality + 1)
+                {
+                    //añadir nuevo punto a voronoi no tiene sentido
+                    IEnumerable<IVoronoiVertex> newVoronoiVertexes = BuildTesellation(affectedNucleis);
+                    removeOldVertexes(candidateVertexes);
+                }
 
+                return n.VoronoiHyperRegion;
 
             }
+        }
+
+        private void removeOldVertexes(IEnumerable<IVoronoiVertex> candidateVertexes)
+        {
+            throw new NotImplementedException();
+        }
+
+        private IEnumerable<IVoronoiVertex> BuildTesellation(IEnumerable<INuclei> affectedNucleis)
+        {
+            throw new NotImplementedException();
         }
 
         public IVoronoiRegion AddNewPoint(double[] newPoint)

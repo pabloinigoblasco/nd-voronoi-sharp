@@ -22,14 +22,14 @@ namespace ndvoronoisharp.Bowyer
 {
     class BowyerNuclei : INuclei
     {
-        
-        BowyerVoronoiVertex referenceVoronoiVertex;
-        public BowyerNuclei(double[] Coordinates,BowyerVoronoiVertex referenceVoronoiVertex)
+
+        internal BowyerVoronoiVertex referenceVoronoiVertex { get; set; }
+        public BowyerNuclei(double[] Coordinate)
         {
             this.coordinates = Coordinates;
             this.VoronoiHyperRegion = new BowyerHyperRegion(this);
-            this.referenceVoronoiVertex = referenceVoronoiVertex;
         }
+        
 
         public void UpdateNucleiData()
         {
@@ -46,6 +46,8 @@ namespace ndvoronoisharp.Bowyer
             get;
             private set;
         }
+
+#warning call this property is not optime in space. Try to avoid it. Anyways it's needed in some cases
         public IEnumerable<INuclei> Neighbourgs
         {
             get 

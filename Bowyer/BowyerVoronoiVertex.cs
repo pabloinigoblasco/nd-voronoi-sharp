@@ -32,25 +32,21 @@ namespace ndvoronoisharp.Bowyer
         private IVoronoiVertex[] NeighbourVertexes { get; set; }
         int dimensionality { get { return NeighbourVertexes.Length; } }
 
-        public BowyerVoronoiVertex(int dimensionality, double[] coordinates)
+        public BowyerVoronoiVertex(int dimensionality,BowyerNuclei[] nucleis)
         {
-            simplice=new Bowyer.BowyerSimplice(dimensionality+1,this);
+            simplice=new BowyerSimplice(dimensionality+1,this, nucleis);
             NeighbourVertexes = new IVoronoiVertex[dimensionality + 1];
-            this.coordinates=coordinates;
+            this.coordinates=new double[dimensionality];
+            simplice.CalculateVoronoiVertexCoordinates(ref coordinates);
         }
 
         private readonly double[] coordinates;
         public double[] Coordinates{get { return coordinates; }}
 
-        private BowyerSimplice simplice;
+        readonly private BowyerSimplice simplice;
         public ISimplice Simplice { get { return simplice; } }
 
-        internal void CreateIncompleteSimpliceFromNuclei(BowyerNuclei nuclei)
-        {
-            simplice = new BowyerSimplice(dimensionality, this);
-            simplice.AddNewNuclei(nuclei);
-            
-        }
+        
         public IEnumerable<IVoronoiVertex> Neighbours
         {
             get { return NeighbourVertexes.Where(n=>n!=null); }

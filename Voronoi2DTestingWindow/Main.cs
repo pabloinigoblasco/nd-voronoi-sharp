@@ -130,8 +130,8 @@ namespace Voronoi2DTestingWindow
                                               Y = npos.Y + paintRadious * directionVector.Y
                                           };
                     */
-                    foreach(IDelunaiFacet facet in s.Facets)
-                        if(facet.IsBoundingFacet)
+                    foreach(ISimpliceFacet facet in s.Facets)
+                        if(facet.IsConvexHullFacet)
                             e.Graphics.DrawLine(Pens.Lime, facet.Vertexes[0].Coordinates.ToPoint2F(), facet.Vertexes[1].Coordinates.ToPoint2F());
 
                 }

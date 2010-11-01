@@ -22,11 +22,11 @@ using System.Text;
 
 namespace ndvoronoisharp.CustomImp
 {
-    public class DelunaiFacet : ndvoronoisharp.IDelunaiFacet
+    public class DelunaiFacet : ndvoronoisharp.ISimpliceFacet
     {
         public ISimplice ParentA { get; private set; }
         public ISimplice ParentB{get; private set;} 
-        public bool IsBoundingFacet
+        public bool IsConvexHullFacet
         {
             get { return ParentB == null; }
         }
@@ -55,6 +55,10 @@ namespace ndvoronoisharp.CustomImp
             this.vertexes=nucleis.ToArray();
             calculateParents(this.vertexes);
         }
-        
+
+        public bool semiHyperSpaceMatch(double[] point)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

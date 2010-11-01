@@ -20,16 +20,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ndvoronoisharp.Common;
 
 namespace ndvoronoisharp.Bowyer
 {
     class BowyerSimplice:ISimplice
     {
-        public BowyerSimplice(int dimensionalyty,BowyerVoronoiVertex voronoiVertex)
+        public BowyerSimplice(int dimensionalyty,BowyerVoronoiVertex voronoiVertex,BowyerNuclei[] nucleis)
         {
-            this.nucleis = new BowyerNuclei[dimensionalyty + 1];
+            this.nucleis = nucleis;
             this.voronoiVertex = voronoiVertex;
-            IsIncomplete = true;
+            IsIncomplete = nucleis.Any(n => n == null);
         }
 
         private readonly BowyerNuclei[] nucleis;
@@ -38,25 +39,11 @@ namespace ndvoronoisharp.Bowyer
         private readonly BowyerVoronoiVertex voronoiVertex;
         public IVoronoiVertex VoronoiVertex{get { return voronoiVertex; }}
 
-        public void AddNewNuclei(BowyerNuclei nuclei)
-        {
-            int indexof = Array.IndexOf(nucleis, null);
-            nucleis[indexof] = nuclei;
-
-            if (indexof == nucleis.Length - 1)
-            {
-                IsIncomplete = false;
-                Helpers.CalculateSimpliceCentroid(Nucleis, this.VoronoiVertex);
-                    
-            }
-        }
-
         public bool IsIncomplete
         {
             get;
             private set;
         }
-
 
         public IEnumerable<ISimplice> NeighbourSimplices
         {
@@ -68,23 +55,63 @@ namespace ndvoronoisharp.Bowyer
             get { throw new NotImplementedException(); }
         }
 
-        public IDelunaiFacet[] Facets
+#warning call this property is not optime in space. Try to avoid it. Anyways it's needed in some cases
+
+        private BowyerSimpliceFacet[] facets;
+        public ISimpliceFacet[] Facets
         {
-            get { throw new NotImplementedException(); }
+            get 
+            {
+                if (IsIncomplete)
+                {
+                    if (nucleis.Count(n => n != null) == nucleis.Length - 1)
+                        facets = Enumerable.Repeat(new BowyerSimpliceFacet(nucleis, this), 1).ToArray();
+                }
+                else
+                    this.facets = Helpers.Combinations(nucleis, nucleis.Length - 1).Select(nucs=>new BowyerSimpliceFacet(nucs.ToArray(),this)).ToArray();
+
+                return facets;
+            }
         }
 
         public bool CircumsphereContains(double[] point)
         {
-            double sum = 0;
-            for (int i = 0; i < point.Length; i++)
+            if (!IsIncomplete)
             {
-                double diff = point[i] - this.VoronoiVertex.Coordinates[i];
-                sum += (diff * diff);
-            }
+                double sum = 0;
+                for (int i = 0; i < point.Length; i++)
+                {
+                    double diff = point[i] - this.VoronoiVertex.Coordinates[i];
+                    sum += (diff * diff);
+                }
 
 #warning optimizable
-            return sum <= Radious*Radious;
+                return sum <= Radious * Radious;
+            }
+            else
+            {
+                //check restricions
+                //foreach facets verify restriction. It's only possible to have zero or one facet
+                //if no facet is made. Always CircumHyperSphere contains the new point
+                if (!Facets.Any())
+                    return true;
+                else
+                {
+                    ISimpliceFacet f = Facets.Single();
+                    return f.semiHyperSpaceMatch(point);
+                }
+                
+            }
         }
 
+
+        public void CalculateVoronoiVertexCoordinates(ref double[] voronoiVertexCoordinates)
+        {
+            if (!IsIncomplete)
+                Helpers.CalculateSimpliceCentroid(null, this.voronoiVertex);
+            else
+                voronoiVertexCoordinates= Enumerable.Repeat(double.PositiveInfinity, voronoiVertexCoordinates.Length).ToArray();
+                
+        }
     }
 }

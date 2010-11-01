@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -10,6 +10,11 @@
     <RootNamespace>ndvoronoisharp</RootNamespace>
     <AssemblyName>nd-voronoi-sharp</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <OldToolsVersion>3.5</OldToolsVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -44,13 +49,15 @@
     <Compile Include="Bowyer\BowyerHyperRegion.cs" />
     <Compile Include="Bowyer\BowyerNuclei.cs" />
     <Compile Include="Bowyer\BowyerSimplice.cs" />
+    <Compile Include="Bowyer\BowyerSimpliceFacet.cs" />
     <Compile Include="Bowyer\BowyerVoronoiDiagram.cs" />
     <Compile Include="Bowyer\BowyerVoronoiVertex.cs" />
+    <Compile Include="Common\HyperPlaneConstraint.cs" />
     <Compile Include="CustomImpl\DelunaiFacet.cs" />
-    <Compile Include="Helpers.cs" />
-    <Compile Include="IDelunaiFacet.cs" />
+    <Compile Include="Common\Helpers.cs" />
     <Compile Include="INuclei.cs" />
     <Compile Include="ISimplice.cs" />
+    <Compile Include="ISimpliceFacet.cs" />
     <Compile Include="IVornoiFacets.cs" />
     <Compile Include="IVoronoiDelunayGraph.cs" />
     <Compile Include="IVoronoiRegion.cs" />

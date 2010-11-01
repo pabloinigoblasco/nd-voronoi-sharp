@@ -30,17 +30,15 @@ namespace ndvoronoisharp.Common
 	/// </summary>
 	public class DefaultVoronoiFacet : IVoronoiFacet
 	{
-		/// <summary>
-		/// Example in the plane Ax+By+Cz<D in R3, coefficents would be [A,B,C,D]
-		/// </summary>
-		private readonly Vector coefficents;
+
 
 		public double this[int coordinateIndex] {
-			get { return coefficents[coordinateIndex]; }
+            get { return constraint.coefficents[coordinateIndex]; }
 		}
 
         public INuclei Owner { get; private set; }
         public INuclei External { get; private set; }
+        private HyperPlaneConstraint constraint;
 
 		/// <summary>
 		/// Constraint is created as a bound between these two points. A line-bound in 2D case, a Plane in the 3D case and a hyperplane in ND case.
@@ -54,7 +52,7 @@ namespace ndvoronoisharp.Common
             double[] ownerPoint = Owner.Coordinates;
             double[] foreignPoint = External.Coordinates;
 
-            coefficents = new Vector(ownerPoint.Length + 1) ;
+            double[] coefficents = new Vector(ownerPoint.Length + 1) ;
             coefficents[coefficents.Length - 1] = 0;
 
 			//calculating coefficents except the independent coefficent
@@ -74,24 +72,24 @@ namespace ndvoronoisharp.Common
         /// <param name="coefficents"></param>
         internal DefaultVoronoiFacet(double[] coefficents)
         {
-            this.coefficents = new Vector(coefficents);
+            this.constraint = new HyperPlaneConstraint(coefficents);
         }
 
-		/// <summary>
-		/// Checks if the point belong to the owner hyperplane
-		/// </summary>
-		public bool semiHyperSpaceMatch (double[] point)
-		{
-			//here should be a verification for the dimensionality. But we're simplifying and looking for efficency.
-			double res = Enumerable.Range (0, point.Length).Sum (i => point[i] * coefficents[i]);
-			
-			return res > coefficents.Last();
-		}
+        /// <summary>
+        /// Checks if the point belong to the owner hyperplane
+        /// </summary>
+        public bool semiHyperSpaceMatch(double[] point)
+        {
+            return constraint.semiHyperSpaceMatch(point);
+        }
 
 
-		public int EuclideanSpaceDimensionality {
-			get { return coefficents.Length - 1; }
-		}
+        public int EuclideanSpaceDimensionality
+        {
+            get { return constraint.SpaceDimesionality; }
+        }
+
+		
 	}
 
 	

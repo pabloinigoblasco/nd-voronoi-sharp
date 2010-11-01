@@ -22,7 +22,7 @@ namespace ndvoronoisharp
 {
     public interface ISimplice
     {
-        IDelunaiFacet[] Facets { get; }
+        ISimpliceFacet[] Facets { get; }
         INuclei[] Nucleis { get; }
         bool CircumsphereContains(double[] point);
         IEnumerable<ISimplice> NeighbourSimplices { get; }
