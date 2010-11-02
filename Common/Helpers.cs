@@ -43,9 +43,10 @@ namespace ndvoronoisharp.Common
         /// <summary>
         /// This is a lazy calculation of the voronoi Vertex, its not calculated if it isn't required.
         /// </summary>
-        internal static void CalculateSimpliceCentroid(INuclei[] Nucleis, IVoronoiVertex iVoronoiVertex)
+        internal static void CalculateSimpliceCentroid(INuclei[] Nucleis, ref double[] vectorOut)
         {
             int Dimensionality = Nucleis.First().Coordinates.Length;
+
             Matrix mA = new Matrix(Dimensionality, Dimensionality);
             Matrix mb = new Matrix(Dimensionality, 1);
             for (int i = 0; i < Dimensionality; i++)
@@ -60,8 +61,120 @@ namespace ndvoronoisharp.Common
             }
 
             Matrix result = mA.Solve(mb);
-            for (int i = 0; i < iVoronoiVertex.Coordinates.Length; i++)
-                iVoronoiVertex.Coordinates[i] = result[0, 1];
+            for (int i = 0; i < vectorOut.Length; i++)
+                vectorOut[i] = result[0, 1];
+        }
+        /// <summary>
+        /// This is a lazy calculation of the voronoi Vertex, its not calculated if it isn't required.
+        /// </summary>
+        internal static void CalculateSimpliceCentroidFromFacets(INuclei[] Nucleis, ref double[] vectorOut)
+        {
+            IVoronoiFacet[] voronoiFacets = Nucleis[0].VoronoiHyperRegion.Facets.Where(f => Nucleis.Contains(f.External)).ToArray();
+
+            int Dimensionality = Nucleis.First().Coordinates.Length;
+            if (Dimensionality == voronoiFacets.Length) //SVD
+                CalculateSimpliceCentroid(Nucleis, ref vectorOut);
+            else
+            {
+                int SimpliceDimensions= Nucleis.Length - 1;
+                int Dof = Dimensionality - SimpliceDimensions;
+                //we have facets.Length restrictions, and we have to create Dof new restrictions.
+
+
+                //we have to solve a facets.Length problem, to get the parameters of the problem.
+                //ie: two facets, two ecuations. constraint with the current space formed by nucleiVectors with 2 parameters (unknowns)
+                //this is a two ecuations/two unknowns problem.
+                if (SimpliceDimensions == 1)
+                {
+                    IVoronoiFacet hpConstraint = voronoiFacets[0];
+                    double tCoeff = 0;
+                    double independentTerm = hpConstraint[Dimensionality ];
+                    Vector[] vectors = VectorsFromPoints(Nucleis);
+                    for (int i = 0; i < Dimensionality; i++)
+                    {
+                        tCoeff += hpConstraint[i] * vectors[0][i];
+                        independentTerm += hpConstraint[i] * Nucleis[0].Coordinates[i];
+                    }
+                    double t =(-independentTerm) / tCoeff;
+
+                    //solve the system
+                    for (int i = 0; i < Dimensionality; i++)
+                    {
+                        vectorOut[i] = Nucleis[0].Coordinates[i] + t * vectors[0][i];
+                    }
+                }
+                else
+                {
+                    //parameters matrix
+                    Matrix mA = new Matrix(voronoiFacets.Length, voronoiFacets.Length);
+                    Vector[] vectors = VectorsFromPoints(Nucleis);
+                    Matrix mb = new Matrix(voronoiFacets.Length, 1);
+
+                    //mounting parameters matrix
+                    for (int row = 0; row < voronoiFacets.Length; row++)
+                    {
+                        IVoronoiFacet hpConstraint = voronoiFacets[row];
+                        double independentTerm = hpConstraint[Dimensionality ];
+                        for (int col = 0; col < voronoiFacets.Length; col++)
+                        {
+                            double tCoeff_col = 0;
+                            for (int j = 0; j < Dimensionality; j++)
+                            {
+                                tCoeff_col += hpConstraint[j] * vectors[col][j];
+                                independentTerm += hpConstraint[j] * Nucleis[0].Coordinates[j];
+                            }
+                            mA[row, col] = tCoeff_col;
+                        }
+                        mb[row, 0] = independentTerm;
+                    }
+
+                    //solving parameters matrix
+                    Matrix parametersRes=mA.Solve(mb);
+                    for (int i = 0; i < vectorOut.Length; i++)
+                    {
+                        double increment=0;
+                        for (int j = 0; j < voronoiFacets.Length; j++)
+                            increment=parametersRes[j,0]*vectors[j][i];
+
+                        vectorOut[i] = Nucleis[0].Coordinates[i] + increment;
+                    }
+
+                }
+            }
+        }
+
+
+
+        internal static int CalculatePointsRank(IEnumerable<INuclei> points)
+        {
+            INuclei first = points.First();
+            Matrix vectors = new Matrix(points.Count() - 1, first.Coordinates.Length);
+            IEnumerator<INuclei> currPoint=points.GetEnumerator();
+            currPoint.MoveNext();
+            
+            for (int i = 0; i < vectors.RowCount && currPoint.MoveNext(); i++)
+            {
+                for (int j = 0; j < vectors.ColumnCount; j++)
+                {
+                    vectors[i, j] = first.Coordinates[j] - currPoint.Current.Coordinates[j];
+                }
+            }
+
+            return vectors.Rank();
+        }
+
+        internal static Vector[] VectorsFromPoints(INuclei[] points)
+        {
+            Vector[] vectors = new Vector[points.Length - 1];
+            int dimensionality = points[0].Coordinates.Length;
+            for (int i = 0; i < vectors.Length; i++)
+            {
+                vectors[i] = new Vector(dimensionality);
+                for (int j = 0; j < points[0].Coordinates.Length; j++)
+                    vectors[i][j] = points[i + 1].Coordinates[j] - points[0].Coordinates[j];
+
+            }
+            return vectors;
         }
     }
 }

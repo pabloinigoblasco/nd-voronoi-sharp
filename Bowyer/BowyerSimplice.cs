@@ -21,67 +21,94 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using ndvoronoisharp.Common;
+using MathNet.Numerics.LinearAlgebra;
 
 namespace ndvoronoisharp.Bowyer
 {
-    class BowyerSimplice:ISimplice
+    class BowyerSimplice : ISimplice
     {
-        public BowyerSimplice(int dimensionalyty,BowyerVoronoiVertex voronoiVertex,BowyerNuclei[] nucleis)
+        internal readonly BowyerSimpliceFacet[] facets;
+        internal readonly BowyerNuclei[] nucleis;
+        private readonly BowyerVoronoiVertex voronoiVertex;
+        private readonly bool infiniteSimplice;
+        public int Dimensionality { get; private set; }
+        public double Radious { get; private set; }
+
+        public BowyerSimplice(int dimensionality, BowyerVoronoiVertex voronoiVertex, BowyerNuclei[] nucleis)
         {
+            this.Dimensionality = dimensionality;
             this.nucleis = nucleis;
             this.voronoiVertex = voronoiVertex;
-            IsIncomplete = nucleis.Any(n => n == null);
+            infiniteSimplice = this.Dimensionality >= nucleis.Length;
+
+            //if(!this.InfiniteSimplice)
+            foreach (var n in nucleis)
+                n.AddSimplice(this);
+
+            if (InfiniteSimplice)
+            {
+                if (dimensionality >= 1)
+                    facets = new BowyerSimpliceFacet[1];
+                else
+                    facets = new BowyerSimpliceFacet[0];
+            }
+            else
+                facets = new BowyerSimpliceFacet[Dimensionality + 1];
         }
 
-        private readonly BowyerNuclei[] nucleis;
-        public INuclei[] Nucleis { get { return nucleis; }}
 
-        private readonly BowyerVoronoiVertex voronoiVertex;
-        public IVoronoiVertex VoronoiVertex{get { return voronoiVertex; }}
-
-        public bool IsIncomplete
-        {
-            get;
-            private set;
-        }
-
+        public INuclei[] Nucleis { get { return nucleis; } }
+        public IVoronoiVertex VoronoiVertex { get { return voronoiVertex; } }
+        public IEnumerable<ISimpliceFacet> Facets { get { return facets; } }
+        public bool InfiniteSimplice { get { return infiniteSimplice; } }
         public IEnumerable<ISimplice> NeighbourSimplices
         {
-            get {return  Nucleis.SelectMany(n => n.Simplices).Distinct(); }
+            get { return facets.Select(f => f.External.Simplice); }
         }
 
-        public double Radious
-        {
-            get { throw new NotImplementedException(); }
-        }
 
-#warning call this property is not optime in space. Try to avoid it. Anyways it's needed in some cases
 
-        private BowyerSimpliceFacet[] facets;
-        public ISimpliceFacet[] Facets
-        {
-            get 
-            {
-                if (facets == null)
-                {
-                    if (IsIncomplete)
-                    {
-                        if (nucleis.Count(n => n != null) == nucleis.Length - 1)
-                            facets = Enumerable.Repeat(new BowyerSimpliceFacet(nucleis, this), 1).ToArray();
-                        else
-                            facets = new BowyerSimpliceFacet[0];
-                    }
-                    else
-                        this.facets = Helpers.Combinations(nucleis, nucleis.Length - 1).Select(nucs => new BowyerSimpliceFacet(nucs.ToArray(), this)).ToArray();
-                }
+        //#warning call this property is not optime in space. Try to avoid it. Anyways it's needed in some cases
 
-                return facets;
-            }
-        }
+        //private BowyerSimpliceFacet[] facets;
+        /*      internal BowyerSimpliceFacet[] CalculatePossibleFacets()
+              {
+                  //if (IsIncomplete)
+                  //{
+                  //    if (nucleis.Count(n => n != null) == nucleis.Length - 1)
+                  //        facets = Enumerable.Repeat(new BowyerSimpliceFacet(nucleis, this), 1).ToArray();
+                  //    else
+                  //        facets = new BowyerSimpliceFacet[0];
+                  //}
+                  //else
+                  if (nucleis.Length == 1)
+                  {
+                      return new BowyerSimpliceFacet[0];
+                  }
+                  else
+                  {
+                      if (nucleis.Length < Dimensionality + 1)
+                          return Helpers.Combinations(nucleis, nucleis.Length).Select(nucs => new BowyerSimpliceFacet(this.VoronoiVertex,null, nucs.ToArray())).ToArray();
+                      else
+                          return Helpers.Combinations(nucleis, Dimensionality).Select(nucs => new BowyerSimpliceFacet(this.voronoiVertex,null, nucs.ToArray())).ToArray();
+
+                      //facets = voronoiVertex.neighbours.Select(vn => new BowyerSimpliceFacet(this.voronoiVertex, vn)).ToArray();
+                  }
+
+            
+                 // else if (nucleis.Length < Dimensionality + 1)
+                  //    this.facets = Helpers.Combinations(nucleis, nucleis.Length).Select(nucs => new BowyerSimpliceFacet(nucs.ToArray(), this)).ToArray();
+                  //else
+                   //   this.facets = Helpers.Combinations(nucleis, Dimensionality+1).Select(nucs => new BowyerSimpliceFacet(nucs.ToArray(), this)).ToArray();
+            
+           
+              }*/
+
+
 
         public bool CircumsphereContains(double[] point)
         {
-            if (!IsIncomplete)
+            if (!InfiniteSimplice)
             {
                 double sum = 0;
                 for (int i = 0; i < point.Length; i++)
@@ -105,18 +132,106 @@ namespace ndvoronoisharp.Bowyer
                     ISimpliceFacet f = Facets.Single();
                     return f.semiHyperSpaceMatch(point);
                 }
-                
+
             }
         }
 
 
-        public void CalculateVoronoiVertexCoordinates(ref double[] voronoiVertexCoordinates)
+        internal double[] CalculateVoronoiVertexCoordinates()
         {
-            if (!IsIncomplete)
-                Helpers.CalculateSimpliceCentroid(null, this.voronoiVertex);
+            int problemDimensionality = this.nucleis.First().Coordinates.Length;
+            double[] voronoiVertexCoordinates = new double[problemDimensionality];
+            if (!InfiniteSimplice)
+            {
+                if (nucleis.Length == 1)
+                {
+                    voronoiVertexCoordinates = nucleis.First().Coordinates;
+                    this.Radious = double.PositiveInfinity;
+                }
+                else
+                {
+                    Helpers.CalculateSimpliceCentroidFromFacets(Nucleis, ref voronoiVertexCoordinates);
+
+                    //now calculate the radious and store it.
+                    Vector v = new Vector(voronoiVertexCoordinates.Length);
+                    for (int i = 0; i < voronoiVertexCoordinates.Length; i++)
+                        v[i] = voronoiVertexCoordinates[i] - nucleis[0].Coordinates[i];
+
+                    this.Radious = v.Norm();
+                }
+            }
             else
-                voronoiVertexCoordinates= Enumerable.Repeat(double.PositiveInfinity, voronoiVertexCoordinates.Length).ToArray();
-                
+                voronoiVertexCoordinates = Enumerable.Repeat(double.PositiveInfinity, voronoiVertexCoordinates.Length).ToArray();
+
+            return voronoiVertexCoordinates;
+
+        }
+
+        /// <summary>
+        /// this is not symetrical. you must add in both sides individually
+        /// </summary>
+        /// <param name="s"></param>
+        internal void AddNeigbourSimpliceForFacets(BowyerSimplice s)
+        {
+            BowyerNuclei[] facetNucleis = this.nucleis.Intersect(s.nucleis).ToArray();
+
+            int index = Array.IndexOf(facets, null);
+            facets[index] = new BowyerSimpliceFacet(this.voronoiVertex, s.voronoiVertex, facetNucleis);
+        }
+
+        internal void RemoveNeigbourSimpliceForFacets(BowyerSimplice s)
+        {
+            bool found = false;
+            for (int i = 0; i < facets.Length && !found; i++)
+            {
+                if (facets[i].External.Simplice == s)
+                {
+                    facets[i] = null;
+                    found = true;
+                }
+            }
+            if (!found)
+                throw new ArgumentException("Invalid Simplice");
+        }
+
+        /// <summary>
+        /// must create the not defined facets to complete the dimension. External Voronoi is supposed to be infinite
+        /// and is not defined here but in the caller Voronoi AddInfiniteNeighbours
+        /// </summary>
+        /// <returns></returns>
+        internal void CreateFacetsToCompleteDimension()
+        {
+            //get nucleis with not enough simplices - candidates
+            //create combinations, create a
+
+            var nucs = nucleis.Where(n => n.simplices.Count <= Dimensionality);
+
+
+            IEnumerable<IEnumerable<BowyerNuclei>> PosibleSimpliceFacets = PosibleSimpliceFacets = Helpers.Combinations(nucs, Dimensionality);
+            foreach (var possibleFacet in PosibleSimpliceFacets)
+            {
+                int index = Array.IndexOf(facets, null);
+                facets[index] = new BowyerSimpliceFacet(this.VoronoiVertex, null, possibleFacet.ToArray());
+            }
+
+
+
+
+            /*
+            if (nucleis.Length == 1)
+            {
+                return new BowyerSimpliceFacet[0];
+            }
+            else
+            {
+                if (nucleis.Length < Dimensionality + 1)
+                    return Helpers.Combinations(nucleis, nucleis.Length).Select(nucs => new BowyerSimpliceFacet(this.VoronoiVertex, null, nucs.ToArray())).ToArray();
+                else
+                    return Helpers.Combinations(nucleis, Dimensionality).Select(nucs => new BowyerSimpliceFacet(this.voronoiVertex, null, nucs.ToArray())).ToArray();
+
+                //facets = voronoiVertex.neighbours.Select(vn => new BowyerSimpliceFacet(this.voronoiVertex, vn)).ToArray();
+             * */
         }
     }
+
 }

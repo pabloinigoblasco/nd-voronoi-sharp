@@ -24,87 +24,203 @@ using ndvoronoisharp.Common;
 
 namespace ndvoronoisharp.Bowyer
 {
-    public class BowyerSimpliceFacet:ISimpliceFacet
+    class BowyerSimpliceFacet : ISimpliceFacet
     {
         //dimensions
-        public BowyerSimpliceFacet(INuclei[] nucleis, ISimplice parentA)
+        public BowyerSimpliceFacet(IVoronoiVertex owner, IVoronoiVertex external, IEnumerable<BowyerNuclei> nucleis)
         {
-            this.Vertexes = nucleis;
-            this.ParentA=parentA;
+            this.Owner = owner;
+            this.External = external;
+            this.nucleis = nucleis.ToArray();
+
+            if (owner == null)
+                throw new ArgumentException("it's needed at least a parent voronoi vertex for a simplice facet");
+
+            if (External != null)
+                CalculateConstraint();
+
+
         }
 
-        public bool IsConvexHullFacet
+        public int IsConvexHullFacet
         {
-            get 
+            get
             {
-                return ParentA == null || ParentB == null;
+                if (!FullyInitialized)
+                    throw new NotSupportedException("Facet no properly initializated. Define the external Voronoi vertex to complete it.");
+
+                if (Owner.Infinity)
+                {
+                    return 2;
+                }
+                else
+                {
+                    if (External.Infinity)
+                        return 1;
+                    else return 0;
+                }
             }
         }
 
         HyperPlaneConstraint constraint;
 
-        public ISimplice ParentA { get; private set;}
-        private ISimplice parentB;
-
-#warning this can get obsolete
-        public ISimplice ParentB { get 
+        public IVoronoiVertex Owner { get; private set; }
+        private IVoronoiVertex external;
+        public IVoronoiVertex External
         {
-            if(parentB==null)
-                return ParentA.NeighbourSimplices.SingleOrDefault(neigh => this.Vertexes.All(v => neigh.Nucleis.Contains(v)));
-            return parentB;
-        }
+            get { return external; }
+            internal set
+            {
+                external = value;
+
+            }
         }
 
-        public INuclei[] Vertexes { get; private set;}
+        public bool FullyInitialized
+        {
+            get
+            {
+                return External != null;
+            }
+        }
+
+        public readonly BowyerNuclei[] nucleis;
+        public INuclei[] Nucleis { get { return nucleis; } }
         public bool semiHyperSpaceMatch(double[] point)
         {
+            if (!FullyInitialized)
+                throw new NotSupportedException("Facet no properly initializated. Define the external Voronoi vertex to complete it.");
+
             if (constraint == null)
+                CalculateConstraint();
+
+
+
+            return constraint.semiHyperSpaceMatch(point);
+        }
+
+        private void CalculateConstraint()
+        {
+            //three possible cases, both finites, owner finite/external infnite and viceversa
+
+            if (!Owner.Infinity && !external.Infinity)
             {
-                if (Vertexes[0].Coordinates.Length == 2)
+                double[] ownerPoint = Owner.Coordinates;
+                double[] foreignPoint = external.Coordinates;
+
+                double[] coefficents = new Vector(ownerPoint.Length + 1);
+                coefficents[coefficents.Length - 1] = 0;
+
+                //calculating coefficents except the independent coefficent
+                for (int i = 0; i < ownerPoint.Length; i++)
                 {
-                    double[] normalVector = new double[] { Vertexes[0].Coordinates[0] };
+                    coefficents[i] = ownerPoint[i] - foreignPoint[i];
+                    //calculating the independent coefficent
+                    coefficents[coefficents.Length - 1] -= coefficents[i] * ((foreignPoint[i] + ownerPoint[i]) / 2f);
+                }
+                this.constraint = new HyperPlaneConstraint(coefficents);
+            }
+            else if (External.Infinity && Owner.Infinity)
+            {
+                INuclei[] n = External.Simplice.Nucleis.Intersect(Owner.Simplice.Nucleis).ToArray();
+                if (n.Length != 2)
+                    throw new NotSupportedException();
+
+                IVoronoiFacet vf = n[0].VoronoiHyperRegion.Facets.Single(f => f.External == n[1]);
+                double[] coefficents = new Vector(Owner.Coordinates.Length + 1);
+                for (int i = 0; i < Owner.Coordinates.Length; i++)
+                {
+                    coefficents[i] = vf[i];
+                }
+                this.constraint = new HyperPlaneConstraint(coefficents);
+
+            }
+            else if (External.Infinity)
+            {
+                if (Owner.Simplice.Nucleis.Length > 2)
+                {
+                    double[] middlePoint = new double[Nucleis[0].Coordinates.Length];
+                    Helpers.CalculateSimpliceCentroidFromFacets(Nucleis, ref middlePoint);
+
+                    Vector normal = new Vector(Nucleis[0].Coordinates.Length + 1);
+                    double independentTerm = 0;
+                    for (int i = 0; i < Nucleis[0].Coordinates.Length; i++)
+                    {
+                        normal[i] = Owner.Coordinates[i] - middlePoint[i];
+                        independentTerm -= normal[i] * middlePoint[i];
+                    }
+                    normal[normal.Length - 1] = independentTerm;
+                    this.constraint = new HyperPlaneConstraint(normal.ToArray());
                 }
                 else
                 {
+                    //only two nucleis...is this enough general for n-dimensions?
+                    //hope this is only the case base, where a voronoiVertex overlaps a voronoiFacet
+                    INuclei n = External.Simplice.Nucleis.Intersect(Owner.Simplice.Nucleis).Single();
 
-                    //calculating the normal vector with a n-dimensional cross-product
-
-                    Vector firstVector = new Vector(point.Length);
-                    Vector secondVector = new Vector(point.Length);
-                    for (int i = 0; i < Vertexes[0].Coordinates.Length; i++)
+                    Vector normal = new Vector(Nucleis[0].Coordinates.Length + 1);
+                    double independentTerm = 0;
+                    for (int i = 0; i < Nucleis[0].Coordinates.Length; i++)
                     {
-                        firstVector[0] = Vertexes[0].Coordinates[i] - Vertexes[1].Coordinates[i];
-                        secondVector[0] = Vertexes[0].Coordinates[i] - Vertexes[2].Coordinates[i];
+                        normal[i] = Owner.Coordinates[i] - n.Coordinates[i];
+                        independentTerm -= normal[i] * n.Coordinates[i];
                     }
-
-
-#warning the direction of the generated normal vector can be whatever.. uncontrolled
-                    Vector totalCrossProduct = Vector.CrossProduct(firstVector, secondVector);
-                    for (int i = 3; i < Vertexes[0].Coordinates.Length; i++)
-                    {
-                        Vector currentVector = new Vector(point.Length);
-                        for (int j = 0; j < point.Length; j++)
-                            currentVector[j] = Vertexes[0].Coordinates[j] - Vertexes[i].Coordinates[j];
-
-                        totalCrossProduct = Vector.CrossProduct(totalCrossProduct, currentVector);
-                    }
-
-                    double[] coefficents = new double[point.Length + 1];
-
-                    //using one arbitrary point for the independent term
-                    for (int i = 0; i < Vertexes[0].Coordinates.Length; i++)
-                    {
-                        coefficents[0] += totalCrossProduct[i] * Vertexes[0].Coordinates[i];
-                        coefficents[i] = totalCrossProduct[i];
-                    }
-
-                    this.constraint = new HyperPlaneConstraint(coefficents);
-
-                    if (this.constraint.semiHyperSpaceMatch(parentB.VoronoiVertex.Coordinates))
-                        this.constraint.Inverse();
+                    normal[normal.Length - 1] = independentTerm;
+                    this.constraint = new HyperPlaneConstraint(normal.ToArray());
                 }
             }
-            return constraint.semiHyperSpaceMatch(point); 
+            else if (Owner.Infinity)
+            {
+                if (External.Simplice.Nucleis.Length > 2)
+                {
+                    double[] middlePoint = new double[Nucleis[0].Coordinates.Length];
+                    Helpers.CalculateSimpliceCentroidFromFacets(Nucleis, ref middlePoint);
+
+                    Vector normal = new Vector(Nucleis[0].Coordinates.Length + 1);
+                    double independentTerm = 0;
+                    for (int i = 0; i < Nucleis[0].Coordinates.Length; i++)
+                    {
+                        normal[i] = middlePoint[i] - External.Coordinates[i];
+                        independentTerm -= normal[i] * middlePoint[i];
+                    }
+                    normal[normal.Length - 1] = independentTerm;
+                    this.constraint = new HyperPlaneConstraint(normal.ToArray());
+                }
+                else
+                {
+                    //only two nucleis...is this enough general for n-dimensions?
+                    //hope this is only the case base, where a voronoiVertex overlaps a voronoiFacet
+                    INuclei n = External.Simplice.Nucleis.Intersect(Owner.Simplice.Nucleis).Single();
+
+                    Vector normal = new Vector(Nucleis[0].Coordinates.Length + 1);
+                    double independentTerm = 0;
+                    for (int i = 0; i < Nucleis[0].Coordinates.Length; i++)
+                    {
+                        normal[i] = n.Coordinates[i] - External.Coordinates[i];
+                        independentTerm -= normal[i] * n.Coordinates[i];
+                    }
+                    normal[normal.Length - 1] = independentTerm;
+                    this.constraint = new HyperPlaneConstraint(normal.ToArray());
+                }
+            }
+            else //both infinities
+                throw new NotFiniteNumberException();
+
+        }
+
+
+        public double this[int coefficentIndex]
+        {
+            get
+            {
+                if (!FullyInitialized)
+                    throw new NotSupportedException("Facet no properly initializated. Define the external Voronoi vertex to complete it.");
+
+                if (constraint == null)
+                    CalculateConstraint();
+
+                return constraint.coefficents[coefficentIndex];
+            }
         }
     }
 }

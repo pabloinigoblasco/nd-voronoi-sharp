@@ -37,7 +37,7 @@ namespace ndvoronoisharp.CustomImp
         {
             get 
             {
-                return Facets.Where(f => !f.IsConvexHullFacet).Select(f => f.ParentA == this ? f.ParentB : f.ParentB).Cast<ISimplice>();
+                return Facets.Where(f => f.IsConvexHullFacet==0).Select(f => f.ParentA == this ? f.ParentB : f.ParentB).Cast<ISimplice>();
             }
         }
         public double Radious { get { return Math.Sqrt(squaredDistance); } }

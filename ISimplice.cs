@@ -22,11 +22,12 @@ namespace ndvoronoisharp
 {
     public interface ISimplice
     {
-        ISimpliceFacet[] Facets { get; }
+        IEnumerable<ISimpliceFacet> Facets { get; }
         INuclei[] Nucleis { get; }
         bool CircumsphereContains(double[] point);
         IEnumerable<ISimplice> NeighbourSimplices { get; }
         IVoronoiVertex VoronoiVertex { get; }
         double Radious { get; }
+        int Dimensionality { get; }
     }
 }

@@ -26,7 +26,7 @@ namespace Voronoi2DTestingWindow
             InitializeComponent();
 
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
-            voronoi = new ndvoronoisharp.CustomImp.VoronoiDelunayGraph(2);
+            voronoi = new ndvoronoisharp.Bowyer.BowyerVoronoiDelunayGraph(2);
 
             int sample_count = 0;
             Random r = new Random();
@@ -131,8 +131,8 @@ namespace Voronoi2DTestingWindow
                                           };
                     */
                     foreach(ISimpliceFacet facet in s.Facets)
-                        if(facet.IsConvexHullFacet)
-                            e.Graphics.DrawLine(Pens.Lime, facet.Vertexes[0].Coordinates.ToPoint2F(), facet.Vertexes[1].Coordinates.ToPoint2F());
+                        if(facet.IsConvexHullFacet>0)
+                            e.Graphics.DrawLine(Pens.Lime, facet.Nucleis[0].Coordinates.ToPoint2F(), facet.Nucleis[1].Coordinates.ToPoint2F());
 
                 }
 

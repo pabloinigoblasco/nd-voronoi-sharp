@@ -25,15 +25,29 @@ namespace ndvoronoisharp.CustomImp
     public class DelunaiFacet : ndvoronoisharp.ISimpliceFacet
     {
         public ISimplice ParentA { get; private set; }
-        public ISimplice ParentB{get; private set;} 
-        public bool IsConvexHullFacet
+        public ISimplice ParentB { get; private set; }
+        public int IsConvexHullFacet
         {
-            get { return ParentB == null; }
+            get
+            {
+
+                if (ParentA == null)
+                {
+                    return 2;
+                }
+                else
+                {
+                    if (ParentB == null)
+                        return 1;
+                    else return 0;
+                }
+
+            }
         }
 
         private void calculateParents(IEnumerable<INuclei> Nucleis)
         {
-            IEnumerable<ISimplice> parents=Nucleis.First().Simplices;
+            IEnumerable<ISimplice> parents = Nucleis.First().Simplices;
             foreach (var n in Nucleis.Skip(1))
                 parents = parents.Intersect(n.Simplices);
 
@@ -41,7 +55,7 @@ namespace ndvoronoisharp.CustomImp
             if (en.MoveNext())
                 ParentA = en.Current;
 
-            if(en.MoveNext())
+            if (en.MoveNext())
                 ParentB = en.Current;
         }
 
@@ -52,13 +66,19 @@ namespace ndvoronoisharp.CustomImp
         {
             ParentA = null;
             ParentB = null;
-            this.vertexes=nucleis.ToArray();
+            this.vertexes = nucleis.ToArray();
             calculateParents(this.vertexes);
         }
 
         public bool semiHyperSpaceMatch(double[] point)
         {
             throw new NotImplementedException();
+        }
+
+
+        public double this[int coefficentIndex]
+        {
+            get { throw new NotImplementedException(); }
         }
     }
 }

@@ -21,10 +21,23 @@ namespace ndvoronoisharp
 {
     public interface ISimpliceFacet
     {
-        bool IsConvexHullFacet { get; }
-        ISimplice ParentA { get; }
-        ISimplice ParentB { get; }
-        INuclei[] Vertexes { get; }
+        //can be 0-nonConvexhull facet, 1-convexHullFacet, 2-DoubleConvexHullFacet
+        int IsConvexHullFacet { get; }
+        IVoronoiVertex Owner { get; }
+        IVoronoiVertex External { get; }
+        INuclei[] Nucleis { get; }
+
+
+        /// <summary>
+        /// coefficents
+        /// </summary>
+        /// <param name="coefficentIndex"></param>
+        /// <returns></returns>
+        double this[int coefficentIndex]
+        {
+            get;
+        }
+
 
         /// <summary>
         /// Checks if the point belong to the owner hyperplane

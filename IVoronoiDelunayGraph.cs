@@ -25,10 +25,14 @@ namespace ndvoronoisharp
         IVoronoiRegion AddNewPoint(object data, double[] newPoint);
         IVoronoiRegion AddNewPoint(double[] newPoint);
         IEnumerable<INuclei> Nucleis { get; }
+
+        /// <summary>
+        /// All existing simplices in the diagram. This not include infinite simplices (simplices of infinite voronoi vertexes)
+        /// </summary>
         IEnumerable<ISimplice> Simplices { get; }
         IEnumerable<IVoronoiRegion> VoronoiRegions { get; }
         IEnumerable<IVoronoiVertex> VoronoiVertexes { get; }
-        int Dimensionality { get; }
+        int ProblemDimensionality { get; }
         IVoronoiRegion GetMatchingRegion(double[] point);
     }
 }

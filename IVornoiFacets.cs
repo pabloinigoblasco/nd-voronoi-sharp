@@ -17,7 +17,12 @@ namespace ndvoronoisharp
         /// </summary>
         bool semiHyperSpaceMatch(double[] point);
 
-        double this[int coordinate]
+        /// <summary>
+        /// coefficents
+        /// </summary>
+        /// <param name="coefficentIndex"></param>
+        /// <returns></returns>
+        double this[int coefficentIndex]
         {
             get;
         }

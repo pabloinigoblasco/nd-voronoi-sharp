@@ -38,7 +38,7 @@ namespace ndvoronoisharp.Common
 
         public INuclei Owner { get; private set; }
         public INuclei External { get; private set; }
-        private HyperPlaneConstraint constraint;
+        public HyperPlaneConstraint constraint { get; private set; }
 
 		/// <summary>
 		/// Constraint is created as a bound between these two points. A line-bound in 2D case, a Plane in the 3D case and a hyperplane in ND case.
@@ -59,8 +59,9 @@ namespace ndvoronoisharp.Common
 			for (int i = 0; i < ownerPoint.Length; i++) {
                 coefficents[i] = ownerPoint[i] - foreignPoint[i];
                 //calculating the independent coefficent
-                coefficents[coefficents.Length - 1] += coefficents[i] * ((foreignPoint[i] + ownerPoint[i]) / 2f);
+                coefficents[coefficents.Length - 1] -= coefficents[i] * ((foreignPoint[i] + ownerPoint[i]) / 2f);
 			}
+            this.constraint = new HyperPlaneConstraint(coefficents);
 		}
 
         /// <summary>

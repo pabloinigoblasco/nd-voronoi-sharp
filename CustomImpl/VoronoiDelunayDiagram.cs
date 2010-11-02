@@ -148,7 +148,7 @@ namespace ndvoronoisharp.CustomImp
                                         .Union(new HyperRegion[] { containerRegion, newRegion })
                                         .Select(r => r.Nuclei);*/
 
-                    var affectedPoints=this.Simplices.SelectMany(s => s.Facets.Where(f => f.IsConvexHullFacet))
+                    var affectedPoints=this.Simplices.SelectMany(s => s.Facets.Where(f => f.IsConvexHullFacet>0))
                                         .SelectMany(f => f.Vertexes)
                                         .Union(containerRegion.NeighbourgRegions.Select(neigh=>neigh.Nuclei))
                                         .Union(new INuclei[]{containerRegion.Nuclei, newRegion.Nuclei})

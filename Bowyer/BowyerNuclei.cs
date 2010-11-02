@@ -17,62 +17,109 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using ndvoronoisharp.Common.implementations;
 
 namespace ndvoronoisharp.Bowyer
 {
-    class BowyerNuclei : INuclei
+    class BowyerNuclei : INuclei,IVoronoiRegion
     {
+        //state
+        private readonly double[] coordinates;
+        internal List<BowyerSimplice> simplices; //redundante with VoronoiGraph
+        Dictionary<INuclei, IVoronoiFacet> voronoiFacets;
 
-        internal BowyerVoronoiVertex referenceVoronoiVertex { get; set; }
-        public BowyerNuclei(double[] Coordinate)
+        public BowyerNuclei(double[] Coordinates)
         {
             this.coordinates = Coordinates;
-            this.VoronoiHyperRegion = new BowyerHyperRegion(this);
+            simplices = new List<BowyerSimplice>();
+            this.voronoiFacets = new Dictionary<INuclei, IVoronoiFacet>();
         }
-        
 
-        public void UpdateNucleiData()
-        {
-#warning fill this method when a voronoi region removed or added, actuallize the referenceVoronoiVertex
-
-        }
-        private readonly double[] coordinates;
+     
         public double[] Coordinates
         {
             get { return coordinates; }
         }
         public IVoronoiRegion VoronoiHyperRegion
         {
-            get;
-            private set;
+            get{return this;}
         }
-
-#warning call this property is not optime in space. Try to avoid it. Anyways it's needed in some cases
+        
         public IEnumerable<INuclei> Neighbourgs
         {
             get 
             {
-
-                return Simplices.SelectMany(s => s.Nucleis.Where(n=>n!=null)).Except(Enumerable.Repeat<INuclei>(this, 1)).Distinct();
+                return voronoiFacets.Keys;
             }
         }
-        public IEnumerable<ISimplice> Simplices
-        {
-            get
-            {
-#warning is this right? we could check all the graph table, but this can be a good optimization
-
-                var simps = referenceVoronoiVertex.Neighbours.Where(v => v!=null && v.Simplice.Nucleis.Contains(this)).Select(v => v.Simplice);
-                simps = simps.Union(Enumerable.Repeat(referenceVoronoiVertex.Simplice, 1)).ToArray();
-                return simps;
-            }
-        }
+        public IEnumerable<ISimplice> Simplices { get { return simplices.Cast<ISimplice>(); } }
         public bool BelongConvexHull
         {
             get 
             {
-                return Simplices.Any(s => ((BowyerSimplice)s).IsIncomplete);
+                return this.coordinates.Length> Simplices.First().Dimensionality || Simplices.Any(s => ((BowyerSimplice)s).InfiniteSimplice);
             }
         }
+
+
+        internal void RemoveSimplice(BowyerSimplice toRemove)
+        {
+            simplices.Remove(toRemove);
+            foreach(var n in toRemove.nucleis)
+                voronoiFacets.Remove(n);
+        }
+        internal void AddSimplice(BowyerSimplice toAdd)
+        {
+            simplices.Add(toAdd);
+            //add also simplice Facets
+            if (!toAdd.InfiniteSimplice)
+            {
+                foreach (var n in toAdd.nucleis)
+                {
+                    if (n != this)
+                        voronoiFacets.Add(n, new Common.implementations.DefaultVoronoiFacet(this, n));
+                }
+            }
+        }
+
+        public IEnumerable<IVoronoiFacet> Facets { 
+            get 
+            {
+                return voronoiFacets.Values;
+            } 
+        }
+        bool IVoronoiRegion.IsInfiniteRegion
+        {
+            get { return BelongConvexHull; }
+        }
+        bool IVoronoiRegion.ContainsPoint(double[] point)
+        {
+            if (point.Length != this.Coordinates.Length)
+                throw new ArgumentException("Invalid dimensionality of the point");
+
+            foreach (var facet in voronoiFacets.Values)
+            {
+                if (!facet.semiHyperSpaceMatch(point))
+                    return false;
+            }
+            return true;
+        }
+        private static bool VerifyRestriction(IVoronoiVertex a, IVoronoiVertex b)
+        {
+            throw new NotImplementedException();
+        }
+        IEnumerable<IVoronoiRegion> IVoronoiRegion.NeighbourgRegions
+        {
+            get { return Neighbourgs.Select(n => n.VoronoiHyperRegion); }
+        }
+        INuclei IVoronoiRegion.Nuclei { get { return this; } }
+
+        IEnumerable<IVoronoiVertex> IVoronoiRegion.Vertexes
+        {
+            get { return Simplices.Select(n => n.VoronoiVertex); }
+        }
+
+       
     }
+
 }

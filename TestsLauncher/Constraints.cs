@@ -17,7 +17,6 @@
 
 using System;
 using NUnit.Framework;
-using ndvoronoisharp.CustomImp;
 using ndvoronoisharp.Common;
 using System.Linq;
 using ndvoronoisharp;
@@ -102,7 +101,6 @@ namespace Tests
 
             Assert.IsFalse(reg.NeighbourgRegions.Any());
             Assert.IsTrue(reg.Nuclei.BelongConvexHull);
-            Assert.IsFalse(reg.Vertexes.Any(v=>!v.Infinity));
         }
 
         [Test]
@@ -122,16 +120,20 @@ namespace Tests
             IVoronoiRegion regB = gdv.AddNewPoint(new double[] { 10, 50, 45, 50 });
 
             Assert.AreEqual(gdv.VoronoiRegions.Count(), 2);
+            Assert.AreEqual(gdv.Simplices.Count(s => s.Dimensionality == 1), 1);
+            Assert.IsTrue(!gdv.Simplices.Any(s => s.Dimensionality > 1));
+            Assert.IsTrue(gdv.Simplices.Single().Facets.All(f => f.semiHyperSpaceMatch(gdv.Simplices.Single().VoronoiVertex.Coordinates)));
+
             Assert.IsTrue(gdv.VoronoiRegions.Contains(reg));
             Assert.IsTrue(gdv.VoronoiRegions.Contains(regB));
 
             Assert.AreEqual(reg.NeighbourgRegions.Count(), 1);
             Assert.IsTrue(reg.IsInfiniteRegion);
-            Assert.IsFalse(reg.Vertexes.Any());
-
+            Assert.AreEqual(reg.Vertexes.Count(),2);
+           
             Assert.AreEqual(regB.NeighbourgRegions.Count(), 1);
             Assert.IsTrue(regB.IsInfiniteRegion);
-            Assert.IsFalse(regB.Vertexes.Any());
+            Assert.AreEqual(regB.Vertexes.Count(), 2);
         }
 
         [Test]
@@ -156,21 +158,35 @@ namespace Tests
             IVoronoiRegion regC = gdv.AddNewPoint(new double[] { 10, 50, -45, -1 });
 
             Assert.AreEqual(gdv.VoronoiRegions.Count(), 3);
+
+            Assert.AreEqual(gdv.Simplices.Count(s => s.Dimensionality == 2),1);
+            Assert.IsTrue(gdv.Simplices.Single().Facets.All(f => f.semiHyperSpaceMatch(gdv.Simplices.Single().VoronoiVertex.Coordinates)));
+            Assert.IsTrue(!gdv.Simplices.Any(s=>s.Dimensionality>2));
+
             Assert.IsTrue(gdv.VoronoiRegions.Contains(reg));
             Assert.IsTrue(gdv.VoronoiRegions.Contains(regB));
             Assert.IsTrue(gdv.VoronoiRegions.Contains(regC));
 
             Assert.AreEqual(reg.NeighbourgRegions.Count(), 2);
             Assert.IsTrue(reg.IsInfiniteRegion);
-            Assert.IsFalse(reg.Vertexes.Any());
+            Assert.AreEqual(reg.Vertexes.Count(),3);
+            Assert.AreEqual(reg.Vertexes.Count(v => v.Infinity), 2);
+            Assert.AreEqual(reg.Facets.Count(), 2);
+            Assert.IsTrue(reg.Facets.All(f=>f.semiHyperSpaceMatch(reg.Nuclei.Coordinates)));
 
             Assert.AreEqual(regB.NeighbourgRegions.Count(), 2);
             Assert.IsTrue(regB.IsInfiniteRegion);
-            Assert.IsFalse(regB.Vertexes.Any());
+            Assert.AreEqual(regB.Vertexes.Count(),3);
+            Assert.AreEqual(regB.Vertexes.Count(v => v.Infinity), 2);
+            Assert.AreEqual(regB.Facets.Count(), 2);
+            Assert.IsTrue(regB.Facets.All(f => f.semiHyperSpaceMatch(regB.Nuclei.Coordinates)));
 
             Assert.AreEqual(regC.NeighbourgRegions.Count(), 2);
             Assert.IsTrue(regC.IsInfiniteRegion);
-            Assert.IsFalse(regC.Vertexes.Any());
+            Assert.AreEqual(regC.Vertexes.Count(),3);
+            Assert.AreEqual(regC.Vertexes.Count(v => v.Infinity), 2);
+            Assert.AreEqual(regC.Facets.Count(), 2);
+            Assert.IsTrue(regC.Facets.All(f => f.semiHyperSpaceMatch(regC.Nuclei.Coordinates)));
         }
 
         [Test]
@@ -206,19 +222,19 @@ namespace Tests
 
             Assert.AreEqual(reg.NeighbourgRegions.Count(), 3);
             Assert.IsTrue(reg.IsInfiniteRegion);
-            Assert.IsFalse(reg.Vertexes.Any());
+
 
             Assert.AreEqual(regB.NeighbourgRegions.Count(), 3);
             Assert.IsTrue(regB.IsInfiniteRegion);
-            Assert.IsFalse(regB.Vertexes.Any());
+
 
             Assert.AreEqual(regC.NeighbourgRegions.Count(), 3);
             Assert.IsTrue(regC.IsInfiniteRegion);
-            Assert.IsFalse(regC.Vertexes.Any());
+
 
             Assert.AreEqual(regD.NeighbourgRegions.Count(), 3);
             Assert.IsTrue(regD.IsInfiniteRegion);
-            Assert.IsFalse(regD.Vertexes.Any());
+
         }
 
         [Test]
@@ -388,29 +404,67 @@ namespace Tests
         }
 
         [Test]
-        public void NoVertex_Build_SameLinePoints3D()
+        public void SameLinePoints3D()
         {
             //interesting to assert the correct neiboorhood
             Assert.Fail();
         }
         [Test]
-        public void NoVertex_Build_SameLinePoints4D()
+        public void SameLinePoints4D()
+        {
+            IVoronoiDelunayGraph gdv = createNewVoronoiDiagram(4);
+            IVoronoiRegion reg = gdv.AddNewPoint(new double[] { 10, 0, 45, 2 });
+            IVoronoiRegion regB = gdv.AddNewPoint(new double[] { 10, 0, 45, 50 });
+            IVoronoiRegion regC = gdv.AddNewPoint(new double[] { 10, 0, 45, -1 });
+            IVoronoiRegion regD = gdv.AddNewPoint(new double[] { 10, 0, 45, -21 });
+
+            Assert.AreEqual(gdv.VoronoiRegions.Count(), 4);
+            Assert.AreEqual(gdv.Simplices.Count(), 3);
+            Assert.AreEqual(gdv.VoronoiVertexes.Count(), 5);
+            Assert.IsTrue(gdv.VoronoiVertexes.Count(v => v.Infinity) == 2);
+            Assert.IsTrue(gdv.Simplices.All(s => s.Dimensionality == 1));
+
+            /*
+            Assert.AreEqual(gdv.Simplices.Count(s => s.Dimensionality == 2), 1);
+            Assert.IsTrue(gdv.Simplices.Single().Facets.All(f => f.semiHyperSpaceMatch(gdv.Simplices.Single().VoronoiVertex.Coordinates)));
+            Assert.IsTrue(!gdv.Simplices.Any(s => s.Dimensionality > 2));
+
+            Assert.IsTrue(gdv.VoronoiRegions.Contains(reg));
+            Assert.IsTrue(gdv.VoronoiRegions.Contains(regB));
+            Assert.IsTrue(gdv.VoronoiRegions.Contains(regC));
+
+            Assert.AreEqual(reg.NeighbourgRegions.Count(), 2);
+            Assert.IsTrue(reg.IsInfiniteRegion);
+            Assert.AreEqual(reg.Vertexes.Count(), 3);
+            Assert.AreEqual(reg.Vertexes.Count(v => v.Infinity), 2);
+            Assert.AreEqual(reg.Facets.Count(), 2);
+            Assert.IsTrue(reg.Facets.All(f => f.semiHyperSpaceMatch(reg.Nuclei.Coordinates)));
+
+            Assert.AreEqual(regB.NeighbourgRegions.Count(), 2);
+            Assert.IsTrue(regB.IsInfiniteRegion);
+            Assert.AreEqual(regB.Vertexes.Count(), 3);
+            Assert.AreEqual(regB.Vertexes.Count(v => v.Infinity), 2);
+            Assert.AreEqual(regB.Facets.Count(), 2);
+            Assert.IsTrue(regB.Facets.All(f => f.semiHyperSpaceMatch(regB.Nuclei.Coordinates)));
+
+            Assert.AreEqual(regC.NeighbourgRegions.Count(), 2);
+            Assert.IsTrue(regC.IsInfiniteRegion);
+            Assert.AreEqual(regC.Vertexes.Count(), 3);
+            Assert.AreEqual(regC.Vertexes.Count(v => v.Infinity), 2);
+            Assert.AreEqual(regC.Facets.Count(), 2);
+            Assert.IsTrue(regC.Facets.All(f => f.semiHyperSpaceMatch(regC.Nuclei.Coordinates)));*/
+        }
+
+        [Test]
+        public void SamePlanePoints3D()
         {
             //interesting to assert the correct neiboorhood
             Assert.Fail();
         }
 
         [Test]
-        public void NoVertex_Build_SamePlanePoints3D()
+        public void PlanePoints4D()
         {
-            //interesting to assert the correct neiboorhood
-            Assert.Fail();
-        }
-
-        [Test]
-        public void NoVertex_Build_SamePlanePoints4D()
-        {
-            //interesting to assert the correct neiboorhood
             Assert.Fail();
         }
 

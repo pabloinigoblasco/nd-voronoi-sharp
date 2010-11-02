@@ -28,9 +28,9 @@ namespace ndvoronoisharp.Common
             double res = Enumerable.Range(0, point.Length).Sum(i => point[i] * coefficents[i]);
 
             if (inverse)
-                return res < coefficents.Last();
+                return res < - coefficents.Last();
             else
-                return res > coefficents.Last();
+                return res > - coefficents.Last();
         }
 
 
