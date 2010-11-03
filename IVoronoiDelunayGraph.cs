@@ -33,6 +33,7 @@ namespace ndvoronoisharp
         IEnumerable<IVoronoiRegion> VoronoiRegions { get; }
         IEnumerable<IVoronoiVertex> VoronoiVertexes { get; }
         int ProblemDimensionality { get; }
+        int Rank { get; }
         IVoronoiRegion GetMatchingRegion(double[] point);
     }
 }

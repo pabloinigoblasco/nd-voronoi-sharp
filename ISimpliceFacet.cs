@@ -21,11 +21,11 @@ namespace ndvoronoisharp
 {
     public interface ISimpliceFacet
     {
-        //can be 0-nonConvexhull facet, 1-convexHullFacet, 2-DoubleConvexHullFacet
-        int IsConvexHullFacet { get; }
+        bool IsConvexHullFacet { get; }
         IVoronoiVertex Owner { get; }
         IVoronoiVertex External { get; }
         INuclei[] Nucleis { get; }
+        int Rank { get; }
 
 
         /// <summary>

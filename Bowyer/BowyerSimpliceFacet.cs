@@ -26,7 +26,11 @@ namespace ndvoronoisharp.Bowyer
 {
     class BowyerSimpliceFacet : ISimpliceFacet
     {
-        //dimensions
+        
+        HyperPlaneConstraint constraint;
+        public IVoronoiVertex Owner { get; private set; }
+        private IVoronoiVertex external;
+
         public BowyerSimpliceFacet(IVoronoiVertex owner, IVoronoiVertex external, IEnumerable<BowyerNuclei> nucleis)
         {
             this.Owner = owner;
@@ -42,30 +46,26 @@ namespace ndvoronoisharp.Bowyer
 
         }
 
-        public int IsConvexHullFacet
+        //dimensions
+        public int Rank { get { return Owner.Simplice.Rank - 1; } }
+
+        public bool IsConvexHullFacet
         {
             get
             {
-                if (!FullyInitialized)
-                    throw new NotSupportedException("Facet no properly initializated. Define the external Voronoi vertex to complete it.");
-
-                if (Owner.Infinity)
-                {
-                    return 2;
-                }
+                //this special case if for 0 dimensional voronoi Diagram, that is a "-1dimensional" facet
+                if (Rank == -1)
+                    return true;
                 else
                 {
-                    if (External.Infinity)
-                        return 1;
-                    else return 0;
+                    if (!FullyInitialized)
+                        throw new NotSupportedException("Facet no properly initializated. Define the external Voronoi vertex to complete it.");
+
+                    return Owner.Infinity || External.Infinity;
                 }
             }
         }
 
-        HyperPlaneConstraint constraint;
-
-        public IVoronoiVertex Owner { get; private set; }
-        private IVoronoiVertex external;
         public IVoronoiVertex External
         {
             get { return external; }
@@ -91,8 +91,15 @@ namespace ndvoronoisharp.Bowyer
             if (!FullyInitialized)
                 throw new NotSupportedException("Facet no properly initializated. Define the external Voronoi vertex to complete it.");
 
-            if (constraint == null)
-                CalculateConstraint();
+            if (Rank == 0)
+            {
+                return true;
+            }
+            else
+            {
+                if (constraint == null)
+                    CalculateConstraint();
+            }
 
 
 
@@ -140,7 +147,7 @@ namespace ndvoronoisharp.Bowyer
                 if (Owner.Simplice.Nucleis.Length > 2)
                 {
                     double[] middlePoint = new double[Nucleis[0].Coordinates.Length];
-                    Helpers.CalculateSimpliceCentroidFromFacets(Nucleis, ref middlePoint);
+                    Helpers.CalculateSimpliceCentroidFromFacets(this.Nucleis,this.Rank, ref middlePoint);
 
                     Vector normal = new Vector(Nucleis[0].Coordinates.Length + 1);
                     double independentTerm = 0;
@@ -174,7 +181,7 @@ namespace ndvoronoisharp.Bowyer
                 if (External.Simplice.Nucleis.Length > 2)
                 {
                     double[] middlePoint = new double[Nucleis[0].Coordinates.Length];
-                    Helpers.CalculateSimpliceCentroidFromFacets(Nucleis, ref middlePoint);
+                    Helpers.CalculateSimpliceCentroidFromFacets(Nucleis, this.Rank, ref middlePoint);
 
                     Vector normal = new Vector(Nucleis[0].Coordinates.Length + 1);
                     double independentTerm = 0;
@@ -221,6 +228,13 @@ namespace ndvoronoisharp.Bowyer
 
                 return constraint.coefficents[coefficentIndex];
             }
+        }
+
+        internal void Dispose()
+        {
+            this.external = null;
+            this.Owner = null;
+            this.constraint = null;
         }
     }
 }

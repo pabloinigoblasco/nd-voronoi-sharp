@@ -85,7 +85,7 @@ namespace ndvoronoisharp.Common
         }
 
 
-        public int EuclideanSpaceDimensionality
+        public int Rank
         {
             get { return constraint.SpaceDimesionality; }
         }
@@ -117,8 +117,8 @@ namespace ndvoronoisharp.Common
 			public double this[int coordinate] {
 				get { return -decorated[coordinate]; }
 			}
-			public int EuclideanSpaceDimensionality {
-				get { return decorated.EuclideanSpaceDimensionality; }
+			public int Rank {
+				get { return decorated.Rank; }
 			}
 
 

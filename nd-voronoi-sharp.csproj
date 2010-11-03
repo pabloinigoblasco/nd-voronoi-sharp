@@ -54,6 +54,7 @@
     <Compile Include="Bowyer\BowyerVoronoiVertex.cs" />
     <Compile Include="Common\HyperPlaneConstraint.cs" />
     <Compile Include="Common\Helpers.cs" />
+    <Compile Include="Common\HyperSphereConstraint.cs" />
     <Compile Include="INuclei.cs" />
     <Compile Include="ISimplice.cs" />
     <Compile Include="ISimpliceFacet.cs" />

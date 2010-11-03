@@ -27,7 +27,7 @@ namespace ndvoronoisharp
             get;
         }
 
-        int EuclideanSpaceDimensionality { get; }
+        int Rank { get; }
         INuclei Owner { get; }
         INuclei External { get; }
     }

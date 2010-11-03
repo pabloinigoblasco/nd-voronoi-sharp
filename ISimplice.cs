@@ -27,7 +27,7 @@ namespace ndvoronoisharp
         bool CircumsphereContains(double[] point);
         IEnumerable<ISimplice> NeighbourSimplices { get; }
         IVoronoiVertex VoronoiVertex { get; }
-        double Radious { get; }
-        int Dimensionality { get; }
+        int Rank { get; }
+        double Radious{get;}
     }
 }

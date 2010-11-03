@@ -131,7 +131,7 @@ namespace Voronoi2DTestingWindow
                                           };
                     */
                     foreach(ISimpliceFacet facet in s.Facets)
-                        if(facet.IsConvexHullFacet>0)
+                        if(facet.IsConvexHullFacet && facet.Nucleis.Count()>1)
                             e.Graphics.DrawLine(Pens.Lime, facet.Nucleis[0].Coordinates.ToPoint2F(), facet.Nucleis[1].Coordinates.ToPoint2F());
 
                 }

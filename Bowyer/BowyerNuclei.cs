@@ -27,6 +27,7 @@ namespace ndvoronoisharp.Bowyer
         private readonly double[] coordinates;
         internal List<BowyerSimplice> simplices; //redundante with VoronoiGraph
         Dictionary<INuclei, IVoronoiFacet> voronoiFacets;
+        public object Data { get; set; }
 
         public BowyerNuclei(double[] Coordinates)
         {
@@ -57,7 +58,7 @@ namespace ndvoronoisharp.Bowyer
         {
             get 
             {
-                return this.coordinates.Length> Simplices.First().Dimensionality || Simplices.Any(s => ((BowyerSimplice)s).InfiniteSimplice);
+                return this.coordinates.Length> Simplices.First().Rank || Simplices.Any(s => ((BowyerSimplice)s).InfiniteSimplice);
             }
         }
 
@@ -65,7 +66,8 @@ namespace ndvoronoisharp.Bowyer
         internal void RemoveSimplice(BowyerSimplice toRemove)
         {
             simplices.Remove(toRemove);
-            foreach(var n in toRemove.nucleis)
+            //remove voronoi facets, except those used in other simplices
+            foreach(var n in toRemove.nucleis.Except(simplices.SelectMany(s=>s.nucleis)))
                 voronoiFacets.Remove(n);
         }
         internal void AddSimplice(BowyerSimplice toAdd)
@@ -76,7 +78,7 @@ namespace ndvoronoisharp.Bowyer
             {
                 foreach (var n in toAdd.nucleis)
                 {
-                    if (n != this)
+                    if (n != this && !voronoiFacets.ContainsKey(n))
                         voronoiFacets.Add(n, new Common.implementations.DefaultVoronoiFacet(this, n));
                 }
             }

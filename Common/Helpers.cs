@@ -43,135 +43,142 @@ namespace ndvoronoisharp.Common
         /// <summary>
         /// This is a lazy calculation of the voronoi Vertex, its not calculated if it isn't required.
         /// </summary>
-        internal static void CalculateSimpliceCentroid(INuclei[] Nucleis, ref double[] vectorOut)
-        {
-            int Dimensionality = Nucleis.First().Coordinates.Length;
+        //internal static void CalculateSimpliceCentroid(IEnumerable<double[]> Points, ref double[] vectorOut)
+        //{
 
-            Matrix mA = new Matrix(Dimensionality, Dimensionality);
-            Matrix mb = new Matrix(Dimensionality, 1);
-            for (int i = 0; i < Dimensionality; i++)
-            {
-                mb[i, 0] = 0;
-                for (int j = 0; j < Dimensionality; j++)
-                {
-                    mA[i, j] = Nucleis[0].Coordinates[j] - Nucleis[i + 1].Coordinates[j];
-                    mb[i, 0] += mA[i, j] * ((Nucleis[0].Coordinates[j] + Nucleis[i + 1].Coordinates[j]) / 2.0);
-                }
+        //    IEnumerator<double[]> currentPoint=Points.GetEnumerator();
+        //    currentPoint.MoveNext();
+        //    double[] firstPoint = currentPoint.Current;
+        //    int Dimensionality = firstPoint.Length;
 
-            }
+        //    Matrix mA = new Matrix(Dimensionality, Dimensionality);
+        //    Matrix mb = new Matrix(Dimensionality, 1);
+        //    for (int i = 0; currentPoint.MoveNext(); i++)
+        //    {
+        //        mb[i, 0] = 0;
+        //        for (int j = 0; j < Dimensionality; j++)
+        //        {
+        //            mA[i, j] = firstPoint[j] - currentPoint.Current[j];
+        //            mb[i, 0] += mA[i, j] * ((firstPoint[j] + currentPoint.Current[j]) / 2.0);
+        //        }
 
-            Matrix result = mA.Solve(mb);
-            for (int i = 0; i < vectorOut.Length; i++)
-                vectorOut[i] = result[0, 1];
-        }
+        //    }
+
+        //    Matrix result = mA.Solve(mb);
+        //    for (int i = 0; i < vectorOut.Length; i++)
+        //        vectorOut[i] = result[i, 0];
+        //}
+
         /// <summary>
         /// This is a lazy calculation of the voronoi Vertex, its not calculated if it isn't required.
         /// </summary>
-        internal static void CalculateSimpliceCentroidFromFacets(INuclei[] Nucleis, ref double[] vectorOut)
+        internal static void CalculateSimpliceCentroidFromFacets(IEnumerable<INuclei> Nucleis, int simpliceDimensions, ref double[] vectorOut)
         {
-            IVoronoiFacet[] voronoiFacets = Nucleis[0].VoronoiHyperRegion.Facets.Where(f => Nucleis.Contains(f.External)).ToArray();
+            INuclei firstNuclei = Nucleis.First();
 
-            int Dimensionality = Nucleis.First().Coordinates.Length;
-            if (Dimensionality == voronoiFacets.Length) //SVD
-                CalculateSimpliceCentroid(Nucleis, ref vectorOut);
-            else
+
+            int problemDimensionality = Nucleis.First().Coordinates.Length;
+
+            IVoronoiFacet[] voronoiFacets = firstNuclei.VoronoiHyperRegion.Facets.Where(f => Nucleis.Contains(f.External)).ToArray();
+
+            int Dof = problemDimensionality - simpliceDimensions;
+            //we have facets.Length restrictions, and we have to create Dof new restrictions.
+
+
+            //we have to solve a facets.Length problem, to get the parameters of the problem.
+            //ie: two facets, two ecuations. constraint with the current space formed by nucleiVectors with 2 parameters (unknowns)
+            //this is a two ecuations/two unknowns problem.
+            if (simpliceDimensions == 1)
             {
-                int SimpliceDimensions= Nucleis.Length - 1;
-                int Dof = Dimensionality - SimpliceDimensions;
-                //we have facets.Length restrictions, and we have to create Dof new restrictions.
-
-
-                //we have to solve a facets.Length problem, to get the parameters of the problem.
-                //ie: two facets, two ecuations. constraint with the current space formed by nucleiVectors with 2 parameters (unknowns)
-                //this is a two ecuations/two unknowns problem.
-                if (SimpliceDimensions == 1)
+                IVoronoiFacet hpConstraint = voronoiFacets[0];
+                double tCoeff = 0;
+                double independentTerm = hpConstraint[problemDimensionality];
+                Vector[] vectors = VectorsFromPoints(Nucleis, simpliceDimensions + 1);
+                for (int i = 0; i < problemDimensionality; i++)
                 {
-                    IVoronoiFacet hpConstraint = voronoiFacets[0];
-                    double tCoeff = 0;
-                    double independentTerm = hpConstraint[Dimensionality ];
-                    Vector[] vectors = VectorsFromPoints(Nucleis);
-                    for (int i = 0; i < Dimensionality; i++)
-                    {
-                        tCoeff += hpConstraint[i] * vectors[0][i];
-                        independentTerm += hpConstraint[i] * Nucleis[0].Coordinates[i];
-                    }
-                    double t =(-independentTerm) / tCoeff;
-
-                    //solve the system
-                    for (int i = 0; i < Dimensionality; i++)
-                    {
-                        vectorOut[i] = Nucleis[0].Coordinates[i] + t * vectors[0][i];
-                    }
+                    tCoeff += hpConstraint[i] * vectors[0][i];
+                    independentTerm += hpConstraint[i] * firstNuclei.Coordinates[i];
                 }
-                else
+                double t = (-independentTerm) / tCoeff;
+
+                //solve the system
+                for (int i = 0; i < problemDimensionality; i++)
                 {
-                    //parameters matrix
-                    Matrix mA = new Matrix(voronoiFacets.Length, voronoiFacets.Length);
-                    Vector[] vectors = VectorsFromPoints(Nucleis);
-                    Matrix mb = new Matrix(voronoiFacets.Length, 1);
-
-                    //mounting parameters matrix
-                    for (int row = 0; row < voronoiFacets.Length; row++)
-                    {
-                        IVoronoiFacet hpConstraint = voronoiFacets[row];
-                        double independentTerm = hpConstraint[Dimensionality ];
-                        for (int col = 0; col < voronoiFacets.Length; col++)
-                        {
-                            double tCoeff_col = 0;
-                            for (int j = 0; j < Dimensionality; j++)
-                            {
-                                tCoeff_col += hpConstraint[j] * vectors[col][j];
-                                independentTerm += hpConstraint[j] * Nucleis[0].Coordinates[j];
-                            }
-                            mA[row, col] = tCoeff_col;
-                        }
-                        mb[row, 0] = independentTerm;
-                    }
-
-                    //solving parameters matrix
-                    Matrix parametersRes=mA.Solve(mb);
-                    for (int i = 0; i < vectorOut.Length; i++)
-                    {
-                        double increment=0;
-                        for (int j = 0; j < voronoiFacets.Length; j++)
-                            increment=parametersRes[j,0]*vectors[j][i];
-
-                        vectorOut[i] = Nucleis[0].Coordinates[i] + increment;
-                    }
-
+                    vectorOut[i] = firstNuclei.Coordinates[i] + t * vectors[0][i];
                 }
             }
+            else
+            {
+                //parameters matrix
+                Matrix mA = new Matrix(voronoiFacets.Length, voronoiFacets.Length);
+                Vector[] vectors = VectorsFromPoints(Nucleis, simpliceDimensions + 1);
+                Matrix mb = new Matrix(voronoiFacets.Length, 1);
+
+                //mounting parameters matrix
+                for (int row = 0; row < voronoiFacets.Length; row++)
+                {
+                    IVoronoiFacet hpConstraint = voronoiFacets[row];
+                    double independentTerm = hpConstraint[problemDimensionality];
+                    for (int col = 0; col < voronoiFacets.Length; col++)
+                    {
+                        double tCoeff_col = 0;
+                        for (int j = 0; j < problemDimensionality; j++)
+                        {
+                            tCoeff_col += hpConstraint[j] * vectors[col][j];
+                            independentTerm += hpConstraint[j] * firstNuclei.Coordinates[j];
+                        }
+                        mA[row, col] = tCoeff_col;
+                    }
+                    mb[row, 0] = independentTerm;
+                }
+
+                //solving parameters matrix
+                Matrix parametersRes = mA.Solve(mb);
+                for (int i = 0; i < vectorOut.Length; i++)
+                {
+                    double increment = 0;
+                    for (int j = 0; j < voronoiFacets.Length; j++)
+                        increment = parametersRes[j, 0] * vectors[j][i];
+
+                    vectorOut[i] = firstNuclei.Coordinates[i] + increment;
+                }
+
+            }
+
         }
 
 
 
-        internal static int CalculatePointsRank(IEnumerable<INuclei> points)
+        internal static int CalculatePointsRank(IEnumerable<INuclei> points, int pointsCount)
         {
             INuclei first = points.First();
-            Matrix vectors = new Matrix(points.Count() - 1, first.Coordinates.Length);
-            IEnumerator<INuclei> currPoint=points.GetEnumerator();
+            Matrix vectors = new Matrix(pointsCount - 1, first.Coordinates.Length);
+            IEnumerator<INuclei> currPoint = points.GetEnumerator();
             currPoint.MoveNext();
-            
+
             for (int i = 0; i < vectors.RowCount && currPoint.MoveNext(); i++)
             {
                 for (int j = 0; j < vectors.ColumnCount; j++)
-                {
                     vectors[i, j] = first.Coordinates[j] - currPoint.Current.Coordinates[j];
-                }
+
             }
 
             return vectors.Rank();
         }
 
-        internal static Vector[] VectorsFromPoints(INuclei[] points)
+        internal static Vector[] VectorsFromPoints(IEnumerable<INuclei> points, int pointsCount)
         {
-            Vector[] vectors = new Vector[points.Length - 1];
-            int dimensionality = points[0].Coordinates.Length;
-            for (int i = 0; i < vectors.Length; i++)
+            Vector[] vectors = new Vector[pointsCount - 1];
+            IEnumerator<INuclei> currentPoint = points.GetEnumerator();
+            currentPoint.MoveNext();
+            INuclei first = currentPoint.Current;
+
+            int dimensionality = first.Coordinates.Length;
+            for (int i = 0; currentPoint.MoveNext(); i++)
             {
                 vectors[i] = new Vector(dimensionality);
-                for (int j = 0; j < points[0].Coordinates.Length; j++)
-                    vectors[i][j] = points[i + 1].Coordinates[j] - points[0].Coordinates[j];
+                for (int j = 0; j < first.Coordinates.Length; j++)
+                    vectors[i][j] = currentPoint.Current.Coordinates[j] - first.Coordinates[j];
 
             }
             return vectors;

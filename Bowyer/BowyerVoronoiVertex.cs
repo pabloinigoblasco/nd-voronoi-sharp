@@ -20,37 +20,36 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ndvoronoisharp.Common;
 
 namespace ndvoronoisharp.Bowyer
 {
-    class BowyerVoronoiVertex:IVoronoiVertex
+    class BowyerVoronoiVertex : IVoronoiVertex
     {
         /*Delunay Simplices whose facets intersects in the vorono Vertex*/
         /// <summary>
         /// warning to all the calls to these property
         /// </summary>
-        internal List<BowyerVoronoiVertex> neighbours { get; set; }
-        internal readonly double[] coordinates;
+        
         readonly internal BowyerSimplice simplice;
 
-        public BowyerVoronoiVertex(int dimensionality,BowyerNuclei[] nucleis)
+        public BowyerVoronoiVertex(int dimensionality, BowyerNuclei[] nucleis, HyperSphereConstraint hyperSphereConstraint)
         {
-            neighbours = new List<BowyerVoronoiVertex>();
-            simplice = new BowyerSimplice(dimensionality, this, nucleis);
-            this.coordinates = simplice.CalculateVoronoiVertexCoordinates();
+            simplice = new BowyerSimplice(hyperSphereConstraint, dimensionality, this, nucleis);
         }
 
-        
-        public double[] Coordinates{get { return coordinates; }}
+
+        public double[] Coordinates { get { return simplice.Centroid; } }
         public ISimplice Simplice { get { return simplice; } }
-        int dimensionality { get { return simplice.Dimensionality; } }
+        int dimensionality { get { return simplice.Rank; } }
+
         public IEnumerable<IVoronoiVertex> Neighbours
-        {       
-            get { return neighbours.Cast<IVoronoiVertex>(); }
+        {
+            get { return this.simplice.facets.Where(f => f.External != null).Select(f => f.External); } 
         }
         public bool Infinity
         {
-            get 
+            get
             {
                 return simplice.InfiniteSimplice;
             }
@@ -63,8 +62,7 @@ namespace ndvoronoisharp.Bowyer
         /// <param name="neighbourg"></param>
         internal void AddNeighbour(BowyerVoronoiVertex neighbourg)
         {
-            this.neighbours.Add(neighbourg);
-            this.simplice.AddNeigbourSimpliceForFacets(neighbourg.simplice);
+            this.simplice.UpdateFace(neighbourg.simplice);
         }
 
         /// <summary>
@@ -72,28 +70,30 @@ namespace ndvoronoisharp.Bowyer
         /// </summary>
         internal void RemoveNeighbour(BowyerVoronoiVertex neighbourg)
         {
-            this.neighbours.Remove(neighbourg);
-            this.simplice.RemoveNeigbourSimpliceForFacets(neighbourg.simplice);
+            this.simplice.RemoveFacet(neighbourg.simplice);
         }
+
 
         internal void GenerateInfiniteNeighbousr()
         {
-            int expectedNeighbours = (simplice.Dimensionality + 1);
-            int toCreate = expectedNeighbours - this.neighbours.Count;
-            
-            this.simplice.CreateFacetsToCompleteDimension();
-         
-            foreach (var fn in this.simplice.facets.Where(f=>!f.FullyInitialized))
+#if DEBUG
+            int expectedNeighbours = (simplice.Rank + 1);
+            int toCreate = expectedNeighbours - this.simplice.facets.Length;
+#endif
+
+            //this.simplice.CreateFacetsToCompleteDimension();
+
+            foreach (var fn in this.simplice.facets.Where(f => !f.FullyInitialized))
             {
                 //why infinite neibhours only one facet?
                 //I think it's true for 1,2 and 3D
-                var newInfiniteVornoiNeigbour = new BowyerVoronoiVertex(this.dimensionality, fn.nucleis);
+                var newInfiniteVornoiNeigbour = new BowyerVoronoiVertex(this.dimensionality, fn.nucleis,null);
 
-                fn.External = newInfiniteVornoiNeigbour;
-                this.neighbours.Add(newInfiniteVornoiNeigbour);
+                //initialize this facet
+                fn.External = newInfiniteVornoiNeigbour;                
+                //initialize the other facet
+                newInfiniteVornoiNeigbour.simplice.UpdateFace(this.simplice);
 
-                newInfiniteVornoiNeigbour.neighbours.Add(this);
-                newInfiniteVornoiNeigbour.simplice.AddNeigbourSimpliceForFacets(this.simplice);
 
                 /*if (fac.IsConvexHullFacet >= 1)
                     this.AddNeighbour(new BowyerVoronoiVertex(this.dimensionality, fac.Vertexes.Cast<BowyerNuclei>().ToArray()));
@@ -105,5 +105,15 @@ namespace ndvoronoisharp.Bowyer
         }
 
         public bool IsTrash { get; set; }
+
+        internal void Dispose()
+        {
+            foreach (var n in this.simplice.nucleis)
+                //theoretically this also removes the associated facets.
+                n.RemoveSimplice(this.simplice);
+
+            simplice.Dispose();
+            
+        }
     }
 }
