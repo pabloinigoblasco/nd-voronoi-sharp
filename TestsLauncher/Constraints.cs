@@ -76,6 +76,9 @@ namespace Tests
             Assert.IsTrue(diagram.Simplices.All(s=>s.Facets.Count()==s.Rank+1));
             Assert.IsTrue(diagram.VoronoiVertexes.Where(v=>v.Infinity).All(v=>v.Simplice.Facets.Count()==1));
             Assert.IsTrue(diagram.Simplices.All(s=>s.Facets.All(f=>f.Rank+1==s.Rank)));
+
+            Assert.IsTrue(diagram.Nucleis.All(n => n.VoronoiHyperRegion.Facets.All(f => f.semiHyperSpaceMatch(n.Coordinates))));
+            Assert.IsTrue(diagram.Simplices.All(s => s.Facets.All(f => f.semiHyperSpaceMatch(s.VoronoiVertex.Coordinates))));
         }
 
         [Test()]
@@ -324,19 +327,22 @@ namespace Tests
             
             IVoronoiRegion reg = gdv.AddNewPoint("Cordoba", new double[] { 20, 5 });
             CheckGeneralDiagramCoherence(gdv);
-            
+            Assert.IsTrue(gdv.Simplices.Count() == 1);
+
             IVoronoiRegion regB = gdv.AddNewPoint("Huelva", new double[] { 1, 1 });
             CheckGeneralDiagramCoherence(gdv);
+            Assert.IsTrue(gdv.Simplices.Count() == 1);
 
             IVoronoiRegion regC = gdv.AddNewPoint("Cadiz", new double[] { 40, 1 });
             CheckGeneralDiagramCoherence(gdv);
+            Assert.IsTrue(gdv.Simplices.Count() == 1);
 
             IVoronoiRegion regD = gdv.AddNewPoint("Sevilla", new double[] { 10, -10 });
             CheckGeneralDiagramCoherence(gdv);
+            Assert.IsTrue(gdv.Simplices.Count() == 2);
 
             Assert.IsTrue(gdv.VoronoiRegions.Count() == 4);
-            Assert.IsTrue(gdv.Simplices.Count() == 2);
-            Assert.IsTrue(gdv.VoronoiVertexes.Count() == 2);
+            Assert.IsTrue(gdv.VoronoiVertexes.Count() == 6);
 
             Assert.IsTrue(regD.Nuclei.Simplices.Count() == 2);
             Assert.IsTrue(reg.Nuclei.Simplices.Count() == 2);

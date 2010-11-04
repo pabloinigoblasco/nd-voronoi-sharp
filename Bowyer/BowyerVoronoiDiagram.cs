@@ -19,6 +19,8 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using ndvoronoisharp.Common;
+using System.Diagnostics;
+using System.Text;
 
 namespace ndvoronoisharp.Bowyer
 {
@@ -26,18 +28,20 @@ namespace ndvoronoisharp.Bowyer
     {
 
         internal readonly List<BowyerVoronoiVertex> voronoiVertexes;
+        internal readonly List<INuclei> nucleis;
+
         public int ProblemDimensionality { get; private set; }
         int nucleisRank;
-        int totalNucleiCount;
+
 
         public int Rank { get { return nucleisRank; } }
 
         public BowyerVoronoiDelunayGraph(int spaceDimensionality)
         {
             voronoiVertexes = new List<BowyerVoronoiVertex>();
+            nucleis = new List<INuclei>();
             ProblemDimensionality = spaceDimensionality;
             nucleisRank = 0;
-            totalNucleiCount = 0;
         }
 
         public IVoronoiRegion AddNewPoint(object data, double[] newPoint)
@@ -45,7 +49,6 @@ namespace ndvoronoisharp.Bowyer
             if (newPoint == null || newPoint.Length != ProblemDimensionality)
                 throw new ArgumentException("point added null or has invalid dimensionality");
 
-            this.totalNucleiCount++;
             BowyerNuclei newNuclei = new BowyerNuclei(newPoint);
             newNuclei.Data = data;
 
@@ -64,6 +67,7 @@ namespace ndvoronoisharp.Bowyer
                 var voronoiVertex = new BowyerVoronoiVertex(0, nucleis, new HyperSphereConstraint(newNuclei.Coordinates, double.PositiveInfinity));
 
                 this.voronoiVertexes.Add(voronoiVertex);
+                this.nucleis.Add(newNuclei);
 
                 //create a not formed Simplice
                 return voronoiVertexes.First().Simplice.Nucleis.First().VoronoiHyperRegion;
@@ -77,15 +81,15 @@ namespace ndvoronoisharp.Bowyer
                 List<BowyerVoronoiVertex> affectedVertexes = new List<BowyerVoronoiVertex>();
 #warning optimizable: not variable list without cast, external auxiliar attribute
                 List<BowyerNuclei> affectedNucleis = new List<BowyerNuclei>();
-                affectedNucleis.Add(newNuclei);
 
-                IEnumerable<INuclei> newpointSet = affectedNucleis.Cast<INuclei>();
+
+                IEnumerable<INuclei> newpointSet = new INuclei[] { newNuclei };
 
 #warning optimizable: cant be this an auxiliar attribute?
                 List<BowyerVoronoiVertex> secondaryAffecteVertexes = new List<BowyerVoronoiVertex>();
 
 
-                if (nucleisRank < ProblemDimensionality && Helpers.CalculatePointsRank(Simplices.First().Nucleis.Union(newpointSet), totalNucleiCount + 1) > nucleisRank)
+                if (nucleisRank < ProblemDimensionality && Helpers.CalculatePointsRank(Simplices.First().Nucleis.Union(newpointSet)) > nucleisRank)
                 {
                     affectedVertexes = this.voronoiVertexes;
                     nucleisRank++;
@@ -106,20 +110,32 @@ namespace ndvoronoisharp.Bowyer
                             {
                                 affectedVertexes.Add(v);
                                 v.IsTrash = true;
-                                affectedNucleis.AddRange(v.simplice.nucleis);
+                                foreach (var affectedNuclei in v.simplice.nucleis)
+                                    if (!affectedNucleis.Contains(affectedNuclei))
+                                        affectedNucleis.Add(affectedNuclei);
                             }
-                            
-                            foreach(var vaffected in v.simplice.facets.Where(f => f.External.Infinity).Select(f => (BowyerVoronoiVertex)f.External))
+
+                            foreach (var vaffected in v.simplice.facets.Where(f => f.External.Infinity).Select(f => (BowyerVoronoiVertex)f.External))
                             {
                                 if (!affectedVertexes.Contains(vaffected))
                                 {
                                     affectedVertexes.Add(vaffected);
                                     vaffected.IsTrash = true;
                                 }
-                                
+
                             }
-                            
-                            secondaryAffecteVertexes.AddRange(v.simplice.facets.Where(f => !f.External.Infinity).Select(f => (BowyerVoronoiVertex)f.External));
+
+                            foreach (var secaff in v.simplice.facets.Where(f => !f.External.Infinity))
+                            {
+
+                                if (!affectedVertexes.Contains((BowyerVoronoiVertex)secaff.External) && !secondaryAffecteVertexes.Contains((BowyerVoronoiVertex)secaff.External))
+                                {
+                                    secondaryAffecteVertexes.Add((BowyerVoronoiVertex)secaff.External);
+                                    
+                                }
+                               
+                            }
+
 
                             //add also all the infinite vertexes if it or neighbours who contains it
                             //foreach (var vneigh2 in v.simplice.facets
@@ -133,9 +149,9 @@ namespace ndvoronoisharp.Bowyer
 
                             //}
                         }
-  
-                    
                 }
+
+
 
                 //if (!affectedVertexes.Any())
                 //{
@@ -170,6 +186,8 @@ namespace ndvoronoisharp.Bowyer
                 // }
 
 #if DEBUG
+                Debug.Print(string.Format("{0} ||| adding new point. Affected vertexes: {1}. Secondary Affected vertexes: {2}", this.ToString(), affectedVertexes.Count, secondaryAffecteVertexes.Count));
+
                 if (!affectedVertexes.Any())
                     throw new ArgumentException("this case is not possible and has not been contemplated");
 
@@ -178,6 +196,10 @@ namespace ndvoronoisharp.Bowyer
 
                 if (affectedNucleis.Distinct().Count() != affectedNucleis.Count)
                     throw new ArgumentException("Incoherence in the algorithm");
+
+                if (secondaryAffecteVertexes.Distinct().Count() != secondaryAffecteVertexes.Count)
+                    throw new ArgumentException("Incoherence in the algorithm");
+
 #endif
 
 
@@ -197,6 +219,8 @@ namespace ndvoronoisharp.Bowyer
                 foreach (var v in affectedVertexes)
                 {
                     v.Dispose();
+
+                  
                     foreach (BowyerVoronoiVertex neigh in v.Neighbours)
                     {
                         //if (neigh.Infinity)//dependent voronoiVertex
@@ -224,9 +248,13 @@ namespace ndvoronoisharp.Bowyer
                 //Removing affected simplices
                 voronoiVertexes.RemoveAll(v => v.IsTrash);
 
+                affectedNucleis.Add(newNuclei);
+
+
                 //build tesellation and check some neighbourhood with secondary
                 var generatedVertexes = BuildTesellation(affectedNucleis, secondaryAffecteVertexes, nucleisRank);
 
+                this.nucleis.Add(newNuclei);
                 return newNuclei.VoronoiHyperRegion;
 
             }
@@ -263,7 +291,9 @@ namespace ndvoronoisharp.Bowyer
                 v = new BowyerVoronoiVertex(groupRank, nucleiGroupArray, hyperSphereConstraint);
                 hyperSphereConstraint.Calculate(nucleiGroupArray, ProblemDimensionality, groupRank + 1);
 
-                if (affectedNucleis.Except(nucleiGroupArray)
+#warning this is very little optime!!!
+                if (//nucleis.Except(nucleiGroupArray)
+                    affectedNucleis.Except(nucleiGroupArray)
                     .All(nuc => !v.simplice.CircumsphereContains(nuc.Coordinates)))
                 {
                     validSimplice = true;
@@ -278,19 +308,31 @@ namespace ndvoronoisharp.Bowyer
                     this.voronoiVertexes.Add(v);
 
                     //select those who share a face with the new voronoiVertex
-#warning optimizable or another way?
-                    var existingNeigbours = stableNeighbours.Select(candidateNeigbhour => new
+                    foreach (var s in stableNeighbours)
                     {
-                        candidateNeigbour = candidateNeigbhour,
-                        NucleiIntersection = candidateNeigbhour.simplice.nucleis.Intersect(nucleiGroupArray).Count()
-                    }).Where(t => t.NucleiIntersection == groupRank);
-
-                    foreach (var t in existingNeigbours)
-                    {
-                        t.candidateNeigbour.AddNeighbour(v);
-                        v.AddNeighbour(t.candidateNeigbour);
-
+                        foreach (var f in s.simplice.facets.Where(f => !f.FullyInitialized))
+                        {
+                            if (f.nucleis.All(n=>v.simplice.nucleis.Contains(n)))
+                            {
+                                v.AddNeighbour(f);
+                                f.External = v;
+                            }
+                        }
                     }
+
+
+                    //foreach (var s in stableNeighbours)
+                    //{
+                    //    foreach (var f in s.simplice.facets.Where(f => !f.FullyInitialized))
+                    //    {
+                    //        if (v.simplice.nucleis.All(n => f.nucleis.Contains(n)))
+                    //        {
+                    //            v.AddNeighbour(s);
+                    //            s.AddNeighbour(v);
+                    //        }
+                    //    }
+                    //}
+
                 }
             }
 
@@ -299,12 +341,13 @@ namespace ndvoronoisharp.Bowyer
             IEnumerable<BowyerVoronoiVertex> generatedVertexes = voronoiVertexes.Skip(previousVoronoiVertexSize);
 
             IEnumerable<BowyerVoronoiVertex> createdInfiniteVoronoiVertexes = Enumerable.Empty<BowyerVoronoiVertex>();
-            foreach (BowyerVoronoiVertex v in generatedVertexes)
-            {
-                foreach (var v2 in generatedVertexes)
-                    if (v != v2)
-                        v.AddNeighbour(v2);
-            }
+//            foreach (BowyerVoronoiVertex v in generatedVertexes)
+//            {
+//#warning here sometimes we are doing
+//                foreach (var v2 in generatedVertexes)
+//                    if (v != v2)
+//                        v.AddNeighbour(v2);
+//            }
 
             foreach (BowyerVoronoiVertex v in generatedVertexes)
             {
@@ -338,8 +381,7 @@ namespace ndvoronoisharp.Bowyer
         {
             get
             {
-                return voronoiVertexes.SelectMany(v => v.Simplice.Nucleis)
-                                      .Distinct();
+                return nucleis;
             }
         }
 
@@ -408,6 +450,13 @@ namespace ndvoronoisharp.Bowyer
                 return r;
             }
         }
-
+        public override string ToString()
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("VDiagram - Rank: " + this.Rank);
+            sb.AppendLine("Number of Simplices: " + this.Simplices.Count());
+            sb.AppendLine("Number of Nucleis: " + this.Nucleis.Count());
+            return base.ToString();
+        }
     }
 }

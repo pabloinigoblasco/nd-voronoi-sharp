@@ -164,17 +164,25 @@ namespace ndvoronoisharp.Bowyer
         //    if (!found)
         //        throw new ArgumentException("Invalid Simplice");
         //}
-
-        internal void UpdateFace(BowyerSimplice bowyerSimplice)
+        /// <summary>
+        /// returns false if it was not contained
+        /// </summary>
+        /// <param name="bowyerSimplice"></param>
+        /// <returns></returns>
+        internal bool UpdateFace(BowyerSimpliceFacet externalFacet)
         {
-            BowyerSimpliceFacet facet = this.facets.Single(f => f.nucleis.Intersect(bowyerSimplice.nucleis).Count() == this.Rank);
-            facet.External = bowyerSimplice.voronoiVertex;
+            BowyerSimpliceFacet facet = this.facets.SingleOrDefault(f => f.nucleis.Intersect(externalFacet.nucleis).Count() == this.Rank);
+            if(facet!=null)
+                facet.External = externalFacet.Owner;
+
+            return facet != null;
         }
 
-        internal void RemoveFacet(BowyerSimplice bowyserSimplice)
+        internal void RemoveFacet(BowyerSimpliceFacet externalFacet)
         {
 #if DEBUG
-            BowyerSimpliceFacet facet = facets.Single(f => f.External == bowyserSimplice.voronoiVertex);
+            
+            BowyerSimpliceFacet facet = facets.Single(f => f.External == externalFacet.Owner);
             facet.External = null;
 #else
             BowyerSimpliceFacet facet = facets.First(f => f.External == bowyserSimplice.voronoiVertex);
@@ -246,8 +254,18 @@ namespace ndvoronoisharp.Bowyer
 
         internal void Dispose()
         {
+            foreach (var n in this.nucleis)
+                //theoretically this also removes the associated facets.
+                n.RemoveSimplice(this);
+
             for (int i = 0; i < facets.Length; i++)
+            {
+#warning optimizable
+                if(facets[i].External!=null)
+                    ((BowyerVoronoiVertex)facets[i].External).RemoveNeighbour(facets[i]);
                 facets[i].Dispose();
+
+            }
             
         }
     }

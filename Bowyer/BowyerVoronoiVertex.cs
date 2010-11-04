@@ -60,17 +60,17 @@ namespace ndvoronoisharp.Bowyer
         /// This is not bidirectional. You must do explicitly the two symetrics adds
         /// </summary>
         /// <param name="neighbourg"></param>
-        internal void AddNeighbour(BowyerVoronoiVertex neighbourg)
+        internal void AddNeighbour(BowyerSimpliceFacet neighbourg)
         {
-            this.simplice.UpdateFace(neighbourg.simplice);
+            this.simplice.UpdateFace(neighbourg);
         }
 
         /// <summary>
         /// This is not bidirectional. You must do explicitly the two symetrics removes
         /// </summary>
-        internal void RemoveNeighbour(BowyerVoronoiVertex neighbourg)
+        internal void RemoveNeighbour(BowyerSimpliceFacet neighbourg)
         {
-            this.simplice.RemoveFacet(neighbourg.simplice);
+            this.simplice.RemoveFacet(neighbourg);
         }
 
 
@@ -92,7 +92,7 @@ namespace ndvoronoisharp.Bowyer
                 //initialize this facet
                 fn.External = newInfiniteVornoiNeigbour;                
                 //initialize the other facet
-                newInfiniteVornoiNeigbour.simplice.UpdateFace(this.simplice);
+                newInfiniteVornoiNeigbour.simplice.UpdateFace(fn);
 
 
                 /*if (fac.IsConvexHullFacet >= 1)
@@ -108,11 +108,7 @@ namespace ndvoronoisharp.Bowyer
 
         internal void Dispose()
         {
-            foreach (var n in this.simplice.nucleis)
-                //theoretically this also removes the associated facets.
-                n.RemoveSimplice(this.simplice);
-
-            simplice.Dispose();
+                simplice.Dispose();
             
         }
     }

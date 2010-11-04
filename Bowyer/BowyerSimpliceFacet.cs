@@ -88,15 +88,17 @@ namespace ndvoronoisharp.Bowyer
         public INuclei[] Nucleis { get { return nucleis; } }
         public bool semiHyperSpaceMatch(double[] point)
         {
-            if (!FullyInitialized)
-                throw new NotSupportedException("Facet no properly initializated. Define the external Voronoi vertex to complete it.");
-
-            if (Rank == 0)
+           //yes, -1 is possible, in cases of 0 dimensions (1 point) voronoi diagram. By coherence the dim(facet) = problemDimensionality-1 
+            if (Rank <= 0)
             {
                 return true;
             }
             else
             {
+                if (!FullyInitialized)
+                    throw new NotSupportedException("Facet no properly initializated. Define the external Voronoi vertex to complete it.");
+
+
                 if (constraint == null)
                     CalculateConstraint();
             }

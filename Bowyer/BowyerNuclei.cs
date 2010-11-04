@@ -53,12 +53,12 @@ namespace ndvoronoisharp.Bowyer
                 return voronoiFacets.Keys;
             }
         }
-        public IEnumerable<ISimplice> Simplices { get { return simplices.Cast<ISimplice>(); } }
+        public IEnumerable<ISimplice> Simplices { get { return simplices.Where(s => !s.InfiniteSimplice).Cast<ISimplice>(); } }
         public bool BelongConvexHull
         {
             get 
             {
-                return this.coordinates.Length> Simplices.First().Rank || Simplices.Any(s => ((BowyerSimplice)s).InfiniteSimplice);
+                return this.coordinates.Length> simplices.First().Rank || simplices.Any(s => ((BowyerSimplice)s).InfiniteSimplice);
             }
         }
 
@@ -118,7 +118,7 @@ namespace ndvoronoisharp.Bowyer
 
         IEnumerable<IVoronoiVertex> IVoronoiRegion.Vertexes
         {
-            get { return Simplices.Select(n => n.VoronoiVertex); }
+            get { return simplices.Select(n => n.VoronoiVertex); }
         }
 
        
