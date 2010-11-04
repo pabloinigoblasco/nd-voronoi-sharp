@@ -86,7 +86,7 @@ namespace ndvoronoisharp.Bowyer
                 IEnumerable<INuclei> newpointSet = new INuclei[] { newNuclei };
 
 #warning optimizable: cant be this an auxiliar attribute?
-                List<BowyerVoronoiVertex> secondaryAffecteVertexes = new List<BowyerVoronoiVertex>();
+                var secondaryAffecteVertexes = new List<BowyerSimpliceFacet>();
 
 
                 if (nucleisRank < ProblemDimensionality && Helpers.CalculatePointsRank(Simplices.First().Nucleis.Union(newpointSet)) > nucleisRank)
@@ -125,15 +125,10 @@ namespace ndvoronoisharp.Bowyer
 
                             }
 
-                            foreach (var secaff in v.simplice.facets.Where(f => !f.External.Infinity))
+                            foreach (var otherAffectedFace in v.simplice.facets.Where(f => !f.External.Infinity))
                             {
-
-                                if (!affectedVertexes.Contains((BowyerVoronoiVertex)secaff.External) && !secondaryAffecteVertexes.Contains((BowyerVoronoiVertex)secaff.External))
-                                {
-                                    secondaryAffecteVertexes.Add((BowyerVoronoiVertex)secaff.External);
-                                    
-                                }
-                               
+                                if (!affectedVertexes.Contains((BowyerVoronoiVertex)otherAffectedFace.External) && !secondaryAffecteVertexes.Contains(otherAffectedFace))
+                                    secondaryAffecteVertexes.Add(otherAffectedFace);
                             }
 
 
@@ -212,45 +207,28 @@ namespace ndvoronoisharp.Bowyer
 
 
 
-                //--------------------- BUILD NEW MESH -------------------------------------- 
+                //--------------------- CLEARING EXISTING DATA -------------------------------------- 
+
+                foreach (var f in secondaryAffecteVertexes)
+                    ((BowyerVoronoiVertex)f.Owner).RemoveNeighbour(f);
+
 
                 //Removing affected voronoi vertexes
                 //Removing affected voronoi facets in nucleis
                 foreach (var v in affectedVertexes)
-                {
                     v.Dispose();
-
-                  
-                    foreach (BowyerVoronoiVertex neigh in v.Neighbours)
-                    {
-                        //if (neigh.Infinity)//dependent voronoiVertex
-                        //{
-                        //    neigh.IsTrash = true;
-                        //    foreach (var n in neigh.simplice.nucleis)
-                        //        n.RemoveSimplice(neigh.simplice);
-
-                        //}
-                        //else
-                        //{
-
-#warning these neighbours needs a new neighbour. is it assured?
-                        //else 
-                        //if (!neigh.IsTrash)
-                        //{
-                        //    neigh.RemoveNeighbour(v);
-                        //    secondaryAffecteVertexes.Add(neigh);
-                        //}
-                        //}
-                    }
-                }
 
 
                 //Removing affected simplices
                 voronoiVertexes.RemoveAll(v => v.IsTrash);
 
+#if DEBUG
+                if (secondaryAffecteVertexes.Any(f => f.FullyInitialized))
+                    throw new NotSupportedException("Incoherence in the problem");
+#endif
                 affectedNucleis.Add(newNuclei);
 
-
+                //--------------------- BUILDING NEW MESH -------------------------------------- 
                 //build tesellation and check some neighbourhood with secondary
                 var generatedVertexes = BuildTesellation(affectedNucleis, secondaryAffecteVertexes, nucleisRank);
 
@@ -260,7 +238,7 @@ namespace ndvoronoisharp.Bowyer
             }
         }
 
-        private IEnumerable<BowyerVoronoiVertex> BuildTesellation(IEnumerable<BowyerNuclei> affectedNucleis, IEnumerable<BowyerVoronoiVertex> stableNeighbours, int groupRank)
+        private IEnumerable<BowyerVoronoiVertex> BuildTesellation(IEnumerable<BowyerNuclei> affectedNucleis, IEnumerable<BowyerSimpliceFacet> aloneOldFacets, int groupRank)
         {
             int previousVoronoiVertexSize = voronoiVertexes.Count;
             var newVoronoiVertexes = Helpers.Combinations(affectedNucleis, groupRank + 1);
@@ -308,17 +286,7 @@ namespace ndvoronoisharp.Bowyer
                     this.voronoiVertexes.Add(v);
 
                     //select those who share a face with the new voronoiVertex
-                    foreach (var s in stableNeighbours)
-                    {
-                        foreach (var f in s.simplice.facets.Where(f => !f.FullyInitialized))
-                        {
-                            if (f.nucleis.All(n=>v.simplice.nucleis.Contains(n)))
-                            {
-                                v.AddNeighbour(f);
-                                f.External = v;
-                            }
-                        }
-                    }
+
 
 
                     //foreach (var s in stableNeighbours)
@@ -333,6 +301,7 @@ namespace ndvoronoisharp.Bowyer
                     //    }
                     //}
 
+
                 }
             }
 
@@ -341,16 +310,34 @@ namespace ndvoronoisharp.Bowyer
             IEnumerable<BowyerVoronoiVertex> generatedVertexes = voronoiVertexes.Skip(previousVoronoiVertexSize);
 
             IEnumerable<BowyerVoronoiVertex> createdInfiniteVoronoiVertexes = Enumerable.Empty<BowyerVoronoiVertex>();
-//            foreach (BowyerVoronoiVertex v in generatedVertexes)
-//            {
-//#warning here sometimes we are doing
-//                foreach (var v2 in generatedVertexes)
-//                    if (v != v2)
-//                        v.AddNeighbour(v2);
-//            }
+           
 
             foreach (BowyerVoronoiVertex v in generatedVertexes)
             {
+                foreach (var v2 in generatedVertexes)
+                    if (v != v2)
+                    {
+#warning 3level loop ... this shouldn't be to optime
+                        foreach (var externalFacet in v2.simplice.facets.Where(f => !f.FullyInitialized))
+                        {
+                            BowyerSimpliceFacet thisFacet = v.simplice.facets.SingleOrDefault(f => externalFacet.nucleis.All(n => f.nucleis.Contains(n)));
+                            if (thisFacet != null)
+                            {
+                                externalFacet.External = v;
+                                v.AddNeighbour(thisFacet);
+                            }
+                        }
+                    }
+
+                foreach (BowyerSimpliceFacet externalFacet in aloneOldFacets.Where(f => !f.FullyInitialized))
+                {
+                    BowyerSimpliceFacet thisFacet = v.simplice.facets.SingleOrDefault(f => externalFacet.nucleis.All(n => f.nucleis.Contains(n)));
+                    if (thisFacet != null)
+                    {
+                        externalFacet.External = v;
+                        v.AddNeighbour(thisFacet);
+                    }
+                }
 
                 //this vertex need nucleisRank+1 neighbours
                 if (v.simplice.facets.Count(f => f.FullyInitialized) <= groupRank)
@@ -365,6 +352,12 @@ namespace ndvoronoisharp.Bowyer
                     throw new NotSupportedException("This case has not been contemplated");
 #endif
             }
+
+#if DEBUG
+            if (aloneOldFacets.Any(f => !f.FullyInitialized))
+                throw new NotSupportedException("Incoherence in the problem. All old facets should be filled.");
+#endif
+
             voronoiVertexes.AddRange(createdInfiniteVoronoiVertexes);
 
             return generatedVertexes;
@@ -457,6 +450,17 @@ namespace ndvoronoisharp.Bowyer
             sb.AppendLine("Number of Simplices: " + this.Simplices.Count());
             sb.AppendLine("Number of Nucleis: " + this.Nucleis.Count());
             return base.ToString();
+        }
+
+
+        public IEnumerable<ISimpliceFacet> GetFacetOrNull(INuclei n1, INuclei n2)
+        {
+            IEnumerable<BowyerSimplice> intersectionSimplices=((BowyerNuclei)n1).simplices.Where(s => s.nucleis.Contains(n2));
+            var facetsA=intersectionSimplices.Select(s => s.Facets.SingleOrDefault(f => f.Nucleis.Contains(n2) && f.Nucleis.Contains(n1)))
+                                              .Where(f=>f!=null);
+
+            return facetsA;
+
         }
     }
 }

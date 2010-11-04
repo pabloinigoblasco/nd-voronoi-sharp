@@ -22,6 +22,7 @@ using System.Linq;
 using ndvoronoisharp;
 using ndvoronoisharp.Bowyer;
 using ndvoronoisharp.Common.implementations;
+using System.Collections.Generic;
 
 namespace Tests
 {
@@ -60,6 +61,19 @@ namespace Tests
         }
 
         #endregion
+
+
+        public object Data
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+            set
+            {
+                throw new NotImplementedException();
+            }
+        }
     }
 
     [TestFixture]
@@ -73,12 +87,25 @@ namespace Tests
         {
             Assert.IsTrue(diagram.Simplices.All(s => s.Rank == diagram.Simplices.Max(s2 => s2.Rank)));
 
-            Assert.IsTrue(diagram.Simplices.All(s=>s.Facets.Count()==s.Rank+1));
-            Assert.IsTrue(diagram.VoronoiVertexes.Where(v=>v.Infinity).All(v=>v.Simplice.Facets.Count()==1));
-            Assert.IsTrue(diagram.Simplices.All(s=>s.Facets.All(f=>f.Rank+1==s.Rank)));
+            Assert.IsTrue(diagram.Simplices.All(s => s.Facets.Count() == s.Rank + 1));
+            Assert.IsTrue(diagram.VoronoiVertexes.Where(v => v.Infinity).All(v => v.Simplice.Facets.Count() == 1));
+            Assert.IsTrue(diagram.Simplices.All(s => s.Facets.All(f => f.Rank + 1 == s.Rank)));
 
             Assert.IsTrue(diagram.Nucleis.All(n => n.VoronoiHyperRegion.Facets.All(f => f.semiHyperSpaceMatch(n.Coordinates))));
-            Assert.IsTrue(diagram.Simplices.All(s => s.Facets.All(f => f.semiHyperSpaceMatch(s.VoronoiVertex.Coordinates))));
+            Assert.IsTrue(diagram.Simplices.All(s => s.Facets.All(f => f.Owner == s.VoronoiVertex)));
+
+            if (diagram.Rank > 0)
+                Assert.IsTrue(diagram.Simplices.All(s => s.Facets.Where(f => f.IsConvexHullFacet).All(f => f.External.Infinity)));
+
+            Assert.IsTrue(diagram.Simplices.All(s => s.Facets.Where(f => f.IsConvexHullFacet).All(f => f.Nucleis.All(n => n.BelongConvexHull))));
+
+            Assert.IsTrue(diagram.Simplices.All(s => s.Facets.Where(f => !f.IsConvexHullFacet).All(f => !f.External.Infinity)));
+
+            Assert.IsTrue(diagram.VoronoiRegions.Where(r => r.IsInfiniteRegion).All(r => r.Nuclei.BelongConvexHull));
+
+            Assert.IsTrue(diagram.Simplices.All(s => diagram.Nucleis.Except(s.Nucleis).All(n => !s.CircumsphereContains(n.Coordinates))));
+
+
         }
 
         [Test()]
@@ -324,7 +351,7 @@ namespace Tests
         public void BuildAndRefactorOneSimpliceInTwoSimplices_2D()
         {
             IVoronoiDelunayGraph gdv = createNewVoronoiDiagram(2);
-            
+
             IVoronoiRegion reg = gdv.AddNewPoint("Cordoba", new double[] { 20, 5 });
             CheckGeneralDiagramCoherence(gdv);
             Assert.IsTrue(gdv.Simplices.Count() == 1);
@@ -353,12 +380,20 @@ namespace Tests
         }
 
         [Test]
-        public void BuildAndRefactorTwoSimpliceInTwoSimplices_2D()
+        public void BuildAllwaisInsideCircumpsferes_5nucleis()
         {
             IVoronoiDelunayGraph gdv = createNewVoronoiDiagram(2);
             IVoronoiRegion cordoba = gdv.AddNewPoint("Cordoba", new double[] { 20, 5 });
+            CheckGeneralDiagramCoherence(gdv);
             IVoronoiRegion huelva = gdv.AddNewPoint("Huelva", new double[] { 1, 1 });
+            CheckGeneralDiagramCoherence(gdv);
             IVoronoiRegion cadiz = gdv.AddNewPoint("Cadiz", new double[] { 5, -13 });
+            CheckGeneralDiagramCoherence(gdv);
+
+            IEnumerable<ISimpliceFacet> facet = gdv.GetFacetOrNull(gdv.Nucleis.Single(n => n.Data.ToString() == "Cordoba"), gdv.Nucleis.Single(n => n.Data.ToString() == "Huelva"));
+            Assert.AreEqual(2, facet.Count());
+            Assert.IsTrue(facet.All(f => f.IsConvexHullFacet));
+            
 
             Assert.IsTrue(cordoba.NeighbourgRegions.Contains(huelva));
             Assert.IsTrue(cordoba.NeighbourgRegions.Contains(cadiz));
@@ -367,9 +402,8 @@ namespace Tests
             Assert.IsTrue(cadiz.NeighbourgRegions.Contains(cordoba));
             Assert.IsTrue(cadiz.NeighbourgRegions.Contains(huelva));
 
-
-
             IVoronoiRegion malaga = gdv.AddNewPoint("Malaga", new double[] { 20, -20 });
+            CheckGeneralDiagramCoherence(gdv);
 
             Assert.IsTrue(cordoba.NeighbourgRegions.Contains(huelva));
             Assert.IsTrue(cordoba.NeighbourgRegions.Contains(cadiz));
@@ -379,10 +413,12 @@ namespace Tests
             Assert.IsTrue(cadiz.NeighbourgRegions.Contains(huelva));
 
             IVoronoiRegion sevilla = gdv.AddNewPoint("Sevilla", new double[] { 10, -10 });
+            CheckGeneralDiagramCoherence(gdv);
 
             Assert.AreEqual(gdv.VoronoiRegions.Count(), 5);
             Assert.AreEqual(gdv.Simplices.Count(), 4);
-            Assert.AreEqual(gdv.VoronoiVertexes.Count(), 4);
+            Assert.AreEqual(gdv.VoronoiVertexes.Count(), 8);
+            Assert.AreEqual(gdv.VoronoiVertexes.Count(v=>v.Infinity), 4);
 
             Assert.IsFalse(huelva.NeighbourgRegions.Contains(malaga));
             Assert.IsFalse(malaga.NeighbourgRegions.Contains(huelva));
@@ -395,6 +431,67 @@ namespace Tests
             Assert.AreEqual(huelva.Nuclei.Simplices.Count(), 2);
             Assert.AreEqual(malaga.Nuclei.Simplices.Count(), 2);
 
+            
+            foreach(INuclei sevillaNeighbour in  sevilla.Nuclei.Neighbourgs)
+            {
+                facet = gdv.GetFacetOrNull(sevilla.Nuclei, sevillaNeighbour);
+                Assert.AreEqual(2, facet.Count());
+                Assert.IsTrue(facet.All(f => !f.IsConvexHullFacet));
+            }
+
+
+            CheckGeneralDiagramCoherence(gdv);
+        }
+
+        [Test]
+        public void BuildAllwaisOutsideCircumpsferes_5nucleis()
+        {
+            IVoronoiDelunayGraph gdv = createNewVoronoiDiagram(2);
+            IVoronoiRegion cordoba = gdv.AddNewPoint("Cordoba", new double[] { 20, 5 });
+            CheckGeneralDiagramCoherence(gdv);
+
+            IVoronoiRegion huelva = gdv.AddNewPoint("Huelva", new double[] { 1, 1 });
+            CheckGeneralDiagramCoherence(gdv);
+
+            IVoronoiRegion sevilla = gdv.AddNewPoint("Sevilla", new double[] { 10, -10 });
+            CheckGeneralDiagramCoherence(gdv);
+
+            IVoronoiRegion cadiz = gdv.AddNewPoint("Cadiz", new double[] { 5, -13 });
+            CheckGeneralDiagramCoherence(gdv);
+
+            Assert.IsTrue(!sevilla.Nuclei.BelongConvexHull);
+            Assert.IsTrue(cadiz.Nuclei.BelongConvexHull);
+            Assert.IsTrue(huelva.Nuclei.BelongConvexHull);
+            Assert.IsTrue(cordoba.Nuclei.BelongConvexHull);
+
+            IVoronoiRegion malaga = gdv.AddNewPoint("Malaga", new double[] { 20, -20 });
+            CheckGeneralDiagramCoherence(gdv);
+
+            Assert.AreEqual(gdv.VoronoiRegions.Count(), 5);
+            Assert.AreEqual(gdv.Simplices.Count(), 4);
+            Assert.AreEqual(gdv.VoronoiVertexes.Count(), 8);
+            Assert.AreEqual(gdv.VoronoiVertexes.Count(v => v.Infinity), 4);
+
+            Assert.IsFalse(huelva.NeighbourgRegions.Contains(malaga));
+            Assert.IsFalse(malaga.NeighbourgRegions.Contains(huelva));
+            Assert.IsFalse(cordoba.NeighbourgRegions.Contains(cadiz));
+            Assert.IsFalse(cadiz.NeighbourgRegions.Contains(cordoba));
+
+
+            Assert.AreEqual(sevilla.Nuclei.Simplices.Count(), 4);
+            Assert.AreEqual(cordoba.Nuclei.Simplices.Count(), 2);
+            Assert.AreEqual(huelva.Nuclei.Simplices.Count(), 2);
+            Assert.AreEqual(malaga.Nuclei.Simplices.Count(), 2);
+
+
+            foreach (INuclei sevillaNeighbour in sevilla.Nuclei.Neighbourgs)
+            {
+                IEnumerable<ISimpliceFacet> facet = gdv.GetFacetOrNull(sevilla.Nuclei, sevillaNeighbour);
+                Assert.AreEqual(2, facet.Count());
+                Assert.IsTrue(facet.All(f => !f.IsConvexHullFacet));
+            }
+
+
             CheckGeneralDiagramCoherence(gdv);
         }
 
@@ -402,13 +499,13 @@ namespace Tests
         [Test]
         public void BuildOneSimplice_3D()
         {
-            Assert.Fail();
+            Assert.Ignore("Not implemented");
         }
 
         [Test]
         public void BuildOneSimplice_4D()
         {
-            Assert.Fail();
+            Assert.Ignore("Not implemented");
         }
 
 
@@ -418,61 +515,61 @@ namespace Tests
         public void Vertex_WithoutSimplice2D()
         {
             //interesting to assert the correct neiboorhood
-            Assert.Fail();
+            Assert.Ignore("Not implemented");
         }
 
         [Test]
         public void Vertex_WithoutSimplice3D()
         {
             //interesting to assert the correct neiboorhood
-            Assert.Fail();
+            Assert.Ignore("Not implemented");
         }
 
         [Test]
         public void Vertex_WithoutSimplice4D()
         {
             //interesting to assert the correct neiboorhood
-            Assert.Fail();
+            Assert.Ignore("Not implemented");
         }
 
         [Test]
         public void BowPoints()
         {
             //interesting to assert the correct neiboorhood
-            Assert.Fail();
+            Assert.Ignore("Not implemented");
         }
 
         [Test]
         public void NoVertex_Build_SameLinePoints2D()
         {
             //interesting to assert the correct neiboorhood
-            Assert.Fail();
+            Assert.Ignore("Not implemented");
         }
 
         [Test]
         public void SameLinePoints3D()
         {
             //interesting to assert the correct neiboorhood
-            Assert.Fail();
+            Assert.Ignore("Not implemented");
         }
         [Test]
         public void SameLinePoints4D()
         {
             IVoronoiDelunayGraph gdv = createNewVoronoiDiagram(4);
-            IVoronoiRegion reg = gdv.AddNewPoint(new double[] { 10, 0, 45, 2 });
+            IVoronoiRegion reg = gdv.AddNewPoint("a", new double[] { 10, 0, 45, 2 });
             CheckGeneralDiagramCoherence(gdv);
 
-            IVoronoiRegion regB = gdv.AddNewPoint(new double[] { 10, 0, 45, 50 });
+            IVoronoiRegion regB = gdv.AddNewPoint("b", new double[] { 10, 0, 45, 50 });
             CheckGeneralDiagramCoherence(gdv);
 
-            IVoronoiRegion regC = gdv.AddNewPoint(new double[] { 10, 0, 45, -1 });
+            IVoronoiRegion regC = gdv.AddNewPoint("c", new double[] { 10, 0, 45, -1 });
             CheckGeneralDiagramCoherence(gdv);
 
             Assert.AreEqual(gdv.Simplices.Count(), 2);
             Assert.AreEqual(gdv.VoronoiVertexes.Count(), 4);
             Assert.IsTrue(gdv.VoronoiVertexes.Count(v => v.Infinity) == 2);
 
-            IVoronoiRegion regD = gdv.AddNewPoint(new double[] { 10, 0, 45, -21 });
+            IVoronoiRegion regD = gdv.AddNewPoint("d", new double[] { 10, 0, 45, -21 });
             CheckGeneralDiagramCoherence(gdv);
 
             Assert.AreEqual(gdv.VoronoiRegions.Count(), 4);
@@ -518,20 +615,20 @@ namespace Tests
         public void SamePlanePoints3D()
         {
             //interesting to assert the correct neiboorhood
-            Assert.Fail();
+            Assert.Ignore("Not implemented");
         }
 
         [Test]
         public void PlanePoints4D()
         {
-            Assert.Fail();
+            Assert.Ignore("Not implemented");
         }
 
         [Test]
         public void SameSpacePoints4D()
         {
             //interesting to assert the correct neiboorhood
-            Assert.Fail();
+            Assert.Ignore("Not implemented");
         }
 
 

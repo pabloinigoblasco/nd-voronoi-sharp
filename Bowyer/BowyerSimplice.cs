@@ -164,6 +164,7 @@ namespace ndvoronoisharp.Bowyer
         //    if (!found)
         //        throw new ArgumentException("Invalid Simplice");
         //}
+
         /// <summary>
         /// returns false if it was not contained
         /// </summary>
@@ -178,16 +179,19 @@ namespace ndvoronoisharp.Bowyer
             return facet != null;
         }
 
-        internal void RemoveFacet(BowyerSimpliceFacet externalFacet)
+        /// <summary>
+        /// the face can be local or external
+        /// </summary>
+        /// <param name="face"></param>
+        internal void RemoveFacet(BowyerSimpliceFacet face)
         {
-#if DEBUG
-            
-            BowyerSimpliceFacet facet = facets.Single(f => f.External == externalFacet.Owner);
+            BowyerSimpliceFacet facet;
+            if (face.Owner == this.voronoiVertex)
+                facet=face;
+            else
+                facet= facets.Single(f => f.External == face.Owner);
+             
             facet.External = null;
-#else
-            BowyerSimpliceFacet facet = facets.First(f => f.External == bowyserSimplice.voronoiVertex);
-            facet.External = null;
-#endif
         }
 
         /// <summary>
@@ -258,14 +262,14 @@ namespace ndvoronoisharp.Bowyer
                 //theoretically this also removes the associated facets.
                 n.RemoveSimplice(this);
 
-            for (int i = 0; i < facets.Length; i++)
-            {
-#warning optimizable
-                if(facets[i].External!=null)
-                    ((BowyerVoronoiVertex)facets[i].External).RemoveNeighbour(facets[i]);
-                facets[i].Dispose();
+//            for (int i = 0; i < facets.Length; i++)
+//            {
+//#warning optimizable
+//                if(facets[i].External!=null)
+//                    ((BowyerVoronoiVertex)facets[i].External).RemoveNeighbour(facets[i]);
+//                facets[i].Dispose();
 
-            }
+//            }
             
         }
     }

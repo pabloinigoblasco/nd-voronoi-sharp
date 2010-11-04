@@ -35,5 +35,7 @@ namespace ndvoronoisharp
         int ProblemDimensionality { get; }
         int Rank { get; }
         IVoronoiRegion GetMatchingRegion(double[] point);
+
+        IEnumerable<ISimpliceFacet> GetFacetOrNull(INuclei n1, INuclei n2);
     }
 }

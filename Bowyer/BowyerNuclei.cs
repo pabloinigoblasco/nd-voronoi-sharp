@@ -121,6 +121,14 @@ namespace ndvoronoisharp.Bowyer
             get { return simplices.Select(n => n.VoronoiVertex); }
         }
 
+        public override string ToString()
+        {
+            if (this.Data != null)
+                return this.Data.ToString() + base.ToString();
+            else
+                return base.ToString();
+        }
+
        
     }
 

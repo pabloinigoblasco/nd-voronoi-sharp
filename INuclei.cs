@@ -28,5 +28,6 @@ namespace ndvoronoisharp
         IEnumerable<INuclei> Neighbourgs { get; }
         IEnumerable<ISimplice> Simplices { get; }
         bool BelongConvexHull { get; }
+        object Data { get; set; }
     }
 }
